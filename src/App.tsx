@@ -16,7 +16,14 @@ import {
   Layers,
   Layout,
   Sun,
-  Moon
+  Moon,
+  Printer,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Compass,
+  Minimize2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import * as fabric from "fabric";
@@ -37,6 +44,7 @@ import { Toolbar } from "./components/Toolbar";
 import { Sidebar } from "./components/Sidebar";
 import { LayerPanel } from "./components/LayerPanel";
 import { CropModal } from "./components/CropModal";
+import { PrintModal } from "./components/PrintModal";
 import { VideoStudio } from "./components/VideoStudio";
 import { InAppIframeBrowser } from "./components/InAppIframeBrowser";
 
@@ -53,6 +61,7 @@ export default function App() {
   const [canvasHeight, setCanvasHeight] = useState(1080);
   const [canvasBgColor, setCanvasBgColor] = useState<any>("#FFFFFF");
   const [zoom, setZoom] = useState(1);
+  const [isHudCollapsed, setIsHudCollapsed] = useState(true);
 
   // Storage and Gallery state
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
@@ -77,6 +86,34 @@ export default function App() {
   const [exportMultiplier, setExportMultiplier] = useState(2);
   const [exportFileName, setExportFileName] = useState("");
   const [estimatedSize, setEstimatedSize] = useState("");
+
+  // Print Modal states
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [printCanvasDataUrl, setPrintCanvasDataUrl] = useState("");
+
+  const handleOpenPrintPreview = () => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+
+    // Discard active object selection to avoid rendering controls bounding-boxes in printing
+    const activeObj = canvas.getActiveObject();
+    if (activeObj) canvas.discardActiveObject();
+    canvas.renderAll();
+
+    const dataUrl = canvas.toDataURL({
+      format: "png",
+      multiplier: 3 // high resolution multiplier for printing
+    });
+
+    setPrintCanvasDataUrl(dataUrl);
+    setIsPrintModalOpen(true);
+
+    // Restore active selection
+    if (activeObj) {
+      canvas.setActiveObject(activeObj);
+      canvas.renderAll();
+    }
+  };
 
   // Mobile Drawer State
   const [activeMobileDrawer, setActiveMobileDrawer] = useState<"none" | "assets" | "layers">("none");
@@ -232,6 +269,30 @@ export default function App() {
   const hiddenInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [hiddenInputValue, setHiddenInputValue] = useState("");
   const [canvasInstance, setCanvasInstance] = useState<fabric.Canvas | null>(null);
+
+  // Auto-fit canvas to container on mount and when sizes change or sidebar open/close triggers
+  useEffect(() => {
+    const handleResize = () => {
+      const parent = document.getElementById("canvas-viewport-container");
+      if (parent) {
+        const containerWidth = parent.clientWidth - (isMobile ? 24 : 96);
+        const containerHeight = parent.clientHeight - (isMobile ? 24 : 96);
+        const scaleX = containerWidth / canvasWidth;
+        const scaleY = containerHeight / canvasHeight;
+        const fitZoom = Math.min(scaleX, scaleY, 1) * 0.95;
+        setZoom(parseFloat(fitZoom.toFixed(2)));
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    const timer = setTimeout(handleResize, 150);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
+  }, [canvasWidth, canvasHeight, isSidebarOpen, isLayersOpen, isMobile, activeMobileDrawer, canvasInstance]);
 
   // Undo / Redo Stacks
   const undoStackRef = useRef<string[]>([]);
@@ -546,10 +607,23 @@ export default function App() {
       const activeObj = (e as any).target;
       if (!activeObj || (activeObj as any).isGuide || (activeObj as any).isCropRect) return;
 
+      // Ensure that if a textbox is being dragged, it is not in edit mode
+      if (activeObj && (activeObj.type === "textbox" || activeObj instanceof fabric.Textbox)) {
+        if ((activeObj as any).isEditing) {
+          (activeObj as any).exitEditing();
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        }
+      }
+
       // Calculate precision coordinate offsets (fixes jumping / shaking for objects with originX/originY === 'center')
       const targetBounds = activeObj.getBoundingRect();
       const diffX = activeObj.left - targetBounds.left;
       const diffY = activeObj.top - targetBounds.top;
+
+      let newLeft = activeObj.left;
+      let newTop = activeObj.top;
 
       // 1. Prevent Accidental Canvas Exit (Apply gentle resistance near canvas edges on mobile)
       if (isMobileRef.current) {
@@ -573,10 +647,8 @@ export default function App() {
           bboxTop = maxBBoxTop;
         }
 
-        activeObj.set({
-          left: bboxLeft + diffX,
-          top: bboxTop + diffY
-        });
+        newLeft = bboxLeft + diffX;
+        newTop = bboxTop + diffY;
       }
 
       // Clear previous guides
@@ -589,8 +661,8 @@ export default function App() {
       if (snapToGridRef.current) {
         const gridSize = 25;
         activeObj.set({
-          left: Math.round(activeObj.left / gridSize) * gridSize,
-          top: Math.round(activeObj.top / gridSize) * gridSize
+          left: Math.round(newLeft / gridSize) * gridSize,
+          top: Math.round(newTop / gridSize) * gridSize
         });
         return;
       }
@@ -598,12 +670,8 @@ export default function App() {
       // 3. Smart magnetic snapping & alignment
       if (smartGuidesRef.current) {
         const snapThreshold = 10; // Within 10 pixels, automatically attract smoothly
-        const targetBoundsFresh = activeObj.getBoundingRect();
-        const diffXFresh = activeObj.left - targetBoundsFresh.left;
-        const diffYFresh = activeObj.top - targetBoundsFresh.top;
-
-        const targetCenterX = targetBoundsFresh.left + targetBoundsFresh.width / 2;
-        const targetCenterY = targetBoundsFresh.top + targetBoundsFresh.height / 2;
+        const targetCenterX = targetBounds.left + targetBounds.width / 2;
+        const targetCenterY = targetBounds.top + targetBounds.height / 2;
 
         let snapX: number | null = null;
         let snapY: number | null = null;
@@ -640,24 +708,24 @@ export default function App() {
         const safeMarginsY = [0, canvasHeightRef.current, 20, canvasHeightRef.current - 20, 40, canvasHeightRef.current - 40];
 
         for (const marginX of safeMarginsX) {
-          if (Math.abs(targetBoundsFresh.left - marginX) < snapThreshold) {
-            snapX = marginX + targetBoundsFresh.width / 2;
+          if (Math.abs(targetBounds.left - marginX) < snapThreshold) {
+            snapX = marginX + targetBounds.width / 2;
             snapTypeX = 'edge';
             addGuideLine(marginX, 0, marginX, canvasHeightRef.current, "#10B981");
-          } else if (Math.abs((targetBoundsFresh.left + targetBoundsFresh.width) - marginX) < snapThreshold) {
-            snapX = marginX - targetBoundsFresh.width / 2;
+          } else if (Math.abs((targetBounds.left + targetBounds.width) - marginX) < snapThreshold) {
+            snapX = marginX - targetBounds.width / 2;
             snapTypeX = 'edge';
             addGuideLine(marginX, 0, marginX, canvasHeightRef.current, "#10B981");
           }
         }
 
         for (const marginY of safeMarginsY) {
-          if (Math.abs(targetBoundsFresh.top - marginY) < snapThreshold) {
-            snapY = marginY + targetBoundsFresh.height / 2;
+          if (Math.abs(targetBounds.top - marginY) < snapThreshold) {
+            snapY = marginY + targetBounds.height / 2;
             snapTypeY = 'edge';
             addGuideLine(0, marginY, canvasWidthRef.current, marginY, "#10B981");
-          } else if (Math.abs((targetBoundsFresh.top + targetBoundsFresh.height) - marginY) < snapThreshold) {
-            snapY = marginY - targetBoundsFresh.height / 2;
+          } else if (Math.abs((targetBounds.top + targetBounds.height) - marginY) < snapThreshold) {
+            snapY = marginY - targetBounds.height / 2;
             snapTypeY = 'edge';
             addGuideLine(0, marginY, canvasWidthRef.current, marginY, "#10B981");
           }
@@ -678,12 +746,12 @@ export default function App() {
           const objCenterY = objBounds.top + objBounds.height / 2;
 
           // Align vertical edges/centers of activeObj with those of other objects
-          if (Math.abs(targetBoundsFresh.left - objBounds.left) < snapThreshold) {
-            snapX = objBounds.left + targetBoundsFresh.width / 2;
+          if (Math.abs(targetBounds.left - objBounds.left) < snapThreshold) {
+            snapX = objBounds.left + targetBounds.width / 2;
             snapTypeX = 'object';
             addGuideLine(objBounds.left, 0, objBounds.left, canvasHeightRef.current, "#00E5FF");
-          } else if (Math.abs((targetBoundsFresh.left + targetBoundsFresh.width) - (objBounds.left + objBounds.width)) < snapThreshold) {
-            snapX = objBounds.left + objBounds.width - targetBoundsFresh.width / 2;
+          } else if (Math.abs((targetBounds.left + targetBounds.width) - (objBounds.left + objBounds.width)) < snapThreshold) {
+            snapX = objBounds.left + objBounds.width - targetBounds.width / 2;
             snapTypeX = 'object';
             addGuideLine(objBounds.left + objBounds.width, 0, objBounds.left + objBounds.width, canvasHeightRef.current, "#00E5FF");
           } else if (Math.abs(targetCenterX - objCenterX) < snapThreshold) {
@@ -693,12 +761,12 @@ export default function App() {
           }
 
           // Align horizontal edges/centers
-          if (Math.abs(targetBoundsFresh.top - objBounds.top) < snapThreshold) {
-            snapY = objBounds.top + targetBoundsFresh.height / 2;
+          if (Math.abs(targetBounds.top - objBounds.top) < snapThreshold) {
+            snapY = objBounds.top + targetBounds.height / 2;
             snapTypeY = 'object';
             addGuideLine(0, objBounds.top, canvasWidthRef.current, objBounds.top, "#00E5FF");
-          } else if (Math.abs((targetBoundsFresh.top + targetBoundsFresh.height) - (objBounds.top + objBounds.height)) < snapThreshold) {
-            snapY = objBounds.top + objBounds.height - targetBoundsFresh.height / 2;
+          } else if (Math.abs((targetBounds.top + targetBounds.height) - (objBounds.top + objBounds.height)) < snapThreshold) {
+            snapY = objBounds.top + objBounds.height - targetBounds.height / 2;
             snapTypeY = 'object';
             addGuideLine(0, objBounds.top + objBounds.height, canvasWidthRef.current, objBounds.top + objBounds.height, "#00E5FF");
           } else if (Math.abs(targetCenterY - objCenterY) < snapThreshold) {
@@ -710,15 +778,13 @@ export default function App() {
 
         // Apply precise magnetic snapping (prevents feedback loops & bouncing)
         if (snapX !== null) {
-          const snappedLeft = (snapX - targetBoundsFresh.width / 2) + diffXFresh;
-          activeObj.set("left", snappedLeft);
+          newLeft = (snapX - targetBounds.width / 2) + diffX;
           if (snapTypeX === 'center') {
             addGuideLine(canvasWidthRef.current / 2, 0, canvasWidthRef.current / 2, canvasHeightRef.current, "#FF00C8");
           }
         }
         if (snapY !== null) {
-          const snappedTop = (snapY - targetBoundsFresh.height / 2) + diffYFresh;
-          activeObj.set("top", snappedTop);
+          newTop = (snapY - targetBounds.height / 2) + diffY;
           if (snapTypeY === 'center') {
             addGuideLine(0, canvasHeightRef.current / 2, canvasWidthRef.current, canvasHeightRef.current / 2, "#FF00C8");
           }
@@ -728,6 +794,12 @@ export default function App() {
           canvas.add(...guideLines);
         }
       }
+
+      // Single write at the end
+      activeObj.set({
+        left: newLeft,
+        top: newTop
+      });
     };
 
     // Magnetic rotation and scaling snapping
@@ -832,13 +904,6 @@ export default function App() {
 
       const activeObj = canvas.getActiveObject();
       const transform = (canvas as any)._currentTransform;
-
-      // Handle optional zoom while dragging on mobile!
-      if (activeObj && isMobileRef.current && originalZoomBeforeDrag.current === null) {
-        originalZoomBeforeDrag.current = zoomRef.current;
-        // Smoothly and gently zoom in slightly to focus on detail (e.g. 1.1x)
-        setZoom(prev => parseFloat(Math.min(3, prev * 1.15).toFixed(2)));
-      }
 
       if (activeObj && transform && transform.corner) {
         const e = options.e;
@@ -5160,6 +5225,10 @@ export default function App() {
     const opacity = imgObj.opacity;
     const shadow = imgObj.shadow;
     const clipPath = imgObj.clipPath;
+    const cropX = imgObj.cropX;
+    const cropY = imgObj.cropY;
+    const width = imgObj.width;
+    const height = imgObj.height;
 
     // Get current stack index of the original image object
     const objects = canvas.getObjects();
@@ -5184,6 +5253,10 @@ export default function App() {
         opacity,
         shadow,
         clipPath,
+        cropX,
+        cropY,
+        width,
+        height,
         cornerStyle: "circle"
       });
 
@@ -6029,14 +6102,22 @@ export default function App() {
               <span>{lang === "en" ? "বাঙ" : "EN"}</span>
             </button>
 
+            {/* Quick Print Button */}
+            <button
+              onClick={handleOpenPrintPreview}
+              className="flex items-center gap-1.5 md:gap-2 py-2 px-3 md:px-4.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/10 transition-transform active:scale-95 cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="hidden md:inline">{lang === "bn" ? "প্রিন্ট করুন" : "Quick Print"}</span>
+            </button>
+
             {/* Export High-Res PNG Button */}
             <button
               onClick={() => setIsExportModalOpen(true)}
               className="flex items-center gap-1.5 md:gap-2 py-2 px-3 md:px-4.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-transform active:scale-95 cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">{t.btnDownload}</span>
-              <span className="inline sm:hidden">{lang === "bn" ? "ডাউনলোড" : "Download"}</span>
+              <span className="hidden md:inline">{t.btnDownload}</span>
             </button>
           </div>
         </header>
@@ -6048,7 +6129,7 @@ export default function App() {
           {/* ISOLATED VIEWPORT CAMERA WINDOW */}
           <div 
             id="canvas-viewport-container" 
-            className="flex-1 overflow-auto p-12 flex items-center justify-center relative scrollbar-thin scrollbar-thumb-zinc-800"
+            className="flex-1 overflow-auto p-4 sm:p-6 md:p-12 flex items-center justify-center relative scrollbar-thin scrollbar-thumb-zinc-800"
           >
             {/* FLOATING ACTION OVERLAY PILL (Undo, Redo, Divider, Assets, Layers) */}
             <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-3.5 py-2 rounded-full flex items-center gap-3.5 shadow-2xl backdrop-blur-md z-30 select-none max-w-[90vw] border transition-all duration-300 ${
@@ -6240,42 +6321,221 @@ export default function App() {
             </div>
 
             {/* Elegant Floating HUD Zoom Controls overlay */}
-            <div className="absolute bottom-6 right-6 bg-zinc-950/90 border border-zinc-800 px-3.5 py-2 rounded-xl flex items-center gap-3 shadow-2xl backdrop-blur-md text-zinc-300 z-10 select-none">
-              <button 
-                onClick={() => setZoom(prev => Math.max(0.1, parseFloat((prev - 0.05).toFixed(2))))}
-                className="p-1 hover:text-white hover:bg-zinc-800 rounded transition-colors text-xs font-semibold"
-                title="Zoom Out"
-              >
-                <ZoomOut className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-xs font-mono font-semibold tracking-wider text-amber-400 min-w-[40px] text-center">
-                {Math.round(zoom * 100)}%
-              </span>
-              <button 
-                onClick={() => setZoom(prev => Math.min(3, parseFloat((prev + 0.05).toFixed(2))))}
-                className="p-1 hover:text-white hover:bg-zinc-800 rounded transition-colors text-xs font-semibold"
-                title="Zoom In"
-              >
-                <ZoomIn className="w-3.5 h-3.5" />
-              </button>
-              <div className="w-[1px] h-3 bg-zinc-800" />
-              <button
-                onClick={() => {
-                  const parent = document.getElementById("canvas-viewport-container");
-                  if (parent) {
-                    const containerWidth = parent.clientWidth - 96;
-                    const containerHeight = parent.clientHeight - 96;
-                    const scaleX = containerWidth / canvasWidth;
-                    const scaleY = containerHeight / canvasHeight;
-                    const fitZoom = Math.min(scaleX, scaleY, 1) * 0.95;
-                    setZoom(parseFloat(fitZoom.toFixed(2)));
-                  }
-                }}
-                className="p-1 text-[10px] font-bold text-amber-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-2.5 py-1 rounded-lg transition-colors"
-                title="Auto-Fit Screen"
-              >
-                Fit
-              </button>
+            <div className="absolute bottom-6 right-6 bg-zinc-950/95 border border-zinc-800/90 px-4 py-2 rounded-full flex items-center gap-4 shadow-2xl backdrop-blur-md text-zinc-300 z-10 select-none max-w-[95vw] animate-fade-in">
+              {/* Zoom Controls Section */}
+              <div className="flex items-center gap-1.5">
+                <button 
+                  onClick={() => {
+                    const active = canvasInstance?.getActiveObject();
+                    if (active) {
+                      const scaleX = active.scaleX || 1;
+                      active.scale(Math.max(0.05, scaleX - 0.05));
+                      active.setCoords();
+                      canvasInstance?.requestRenderAll();
+                      saveHistory();
+                    } else {
+                      setZoom(prev => Math.max(0.1, parseFloat((prev - 0.05).toFixed(2))));
+                    }
+                  }}
+                  className="p-1 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+                  title={activeObject ? (lang === "bn" ? "অবজেক্ট ছোট করুন" : "Scale Object Down") : "Zoom Out"}
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-xs font-mono font-bold text-amber-400 min-w-[36px] text-center">
+                  {activeObject ? `${Math.round((canvasInstance?.getActiveObject()?.scaleX || 1) * 100)}%` : `${Math.round(zoom * 100)}%`}
+                </span>
+                <button 
+                  onClick={() => {
+                    const active = canvasInstance?.getActiveObject();
+                    if (active) {
+                      const scaleX = active.scaleX || 1;
+                      active.scale(Math.min(10, scaleX + 0.05));
+                      active.setCoords();
+                      canvasInstance?.requestRenderAll();
+                      saveHistory();
+                    } else {
+                      setZoom(prev => Math.min(3, parseFloat((prev + 0.05).toFixed(2))));
+                    }
+                  }}
+                  className="p-1 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+                  title={activeObject ? (lang === "bn" ? "অবজেক্ট বড় করুন" : "Scale Object Up") : "Zoom In"}
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    const active = canvasInstance?.getActiveObject();
+                    if (active) {
+                      active.scale(1);
+                      canvasInstance?.centerObject(active);
+                      active.setCoords();
+                      canvasInstance?.requestRenderAll();
+                      saveHistory();
+                    } else {
+                      const parent = document.getElementById("canvas-viewport-container");
+                      if (parent) {
+                        const containerWidth = parent.clientWidth - 96;
+                        const containerHeight = parent.clientHeight - 96;
+                        const scaleX = containerWidth / canvasWidth;
+                        const scaleY = containerHeight / canvasHeight;
+                        const fitZoom = Math.min(scaleX, scaleY, 1) * 0.95;
+                        setZoom(parseFloat(fitZoom.toFixed(2)));
+                      }
+                    }
+                  }}
+                  className="text-[10px] font-bold text-amber-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                  title={activeObject ? (lang === "bn" ? "রিসেট সাইজ ও সেন্টার" : "Reset Size & Center") : "Auto-Fit Screen"}
+                >
+                  {activeObject ? (lang === "bn" ? "রিসেট" : "Reset") : "Fit"}
+                </button>
+              </div>
+
+              {/* Vertical Separator */}
+              <div className="w-[1.5px] h-4 bg-zinc-800" />
+
+              {/* Pan Navigation Controls Section */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider hidden sm:inline">
+                  {activeObject 
+                    ? (lang === "bn" ? "অবজেক্ট" : "OBJECT")
+                    : (lang === "bn" ? "প্যান" : "PAN")}:
+                </span>
+                
+                {/* Arrow Left */}
+                <button
+                  onClick={() => {
+                    const canvas = canvasInstance;
+                    if (!canvas) return;
+                    const active = canvas.getActiveObject();
+                    if (active) {
+                      active.set("left", (active.left || 0) - 10);
+                      active.setCoords();
+                      canvas.requestRenderAll();
+                      saveHistory();
+                      syncCanvasStateToReact();
+                    } else {
+                      const vpt = canvas.viewportTransform ? [...canvas.viewportTransform] : [1, 0, 0, 1, 0, 0];
+                      vpt[4] += 50;
+                      canvas.setViewportTransform(vpt);
+                      canvas.requestRenderAll();
+                    }
+                  }}
+                  title={activeObject ? (lang === "bn" ? "বামে সরান" : "Move Left") : (lang === "bn" ? "বামে নিন" : "Pan Left")}
+                  className="w-6.5 h-6.5 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Arrow Up */}
+                <button
+                  onClick={() => {
+                    const canvas = canvasInstance;
+                    if (!canvas) return;
+                    const active = canvas.getActiveObject();
+                    if (active) {
+                      active.set("top", (active.top || 0) - 10);
+                      active.setCoords();
+                      canvas.requestRenderAll();
+                      saveHistory();
+                      syncCanvasStateToReact();
+                    } else {
+                      const vpt = canvas.viewportTransform ? [...canvas.viewportTransform] : [1, 0, 0, 1, 0, 0];
+                      vpt[5] += 50;
+                      canvas.setViewportTransform(vpt);
+                      canvas.requestRenderAll();
+                    }
+                  }}
+                  title={activeObject ? (lang === "bn" ? "উপরে সরান" : "Move Up") : (lang === "bn" ? "উপরে নিন" : "Pan Up")}
+                  className="w-6.5 h-6.5 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Center View */}
+                <button
+                  onClick={() => {
+                    const canvas = canvasInstance;
+                    if (!canvas) return;
+                    const active = canvas.getActiveObject();
+                    if (active) {
+                      canvas.centerObject(active);
+                      active.setCoords();
+                      canvas.requestRenderAll();
+                      saveHistory();
+                      syncCanvasStateToReact();
+                    } else {
+                      const vpt = canvas.viewportTransform ? [...canvas.viewportTransform] : [1, 0, 0, 1, 0, 0];
+                      const parent = document.getElementById("canvas-viewport-container");
+                      if (parent) {
+                        const containerWidth = parent.clientWidth;
+                        const containerHeight = parent.clientHeight;
+                        vpt[4] = (containerWidth - canvasWidth * zoom) / 2;
+                        vpt[5] = (containerHeight - canvasHeight * zoom) / 2;
+                      } else {
+                        vpt[4] = 0;
+                        vpt[5] = 0;
+                      }
+                      canvas.setViewportTransform(vpt);
+                      canvas.requestRenderAll();
+                    }
+                  }}
+                  title={activeObject ? (lang === "bn" ? "মাঝখানে আনুন" : "Center Object") : (lang === "bn" ? "মাঝখানে আনুন" : "Center View")}
+                  className="w-6.5 h-6.5 rounded-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 text-amber-400 font-extrabold text-[10px] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  C
+                </button>
+
+                {/* Arrow Down */}
+                <button
+                  onClick={() => {
+                    const canvas = canvasInstance;
+                    if (!canvas) return;
+                    const active = canvas.getActiveObject();
+                    if (active) {
+                      active.set("top", (active.top || 0) + 10);
+                      active.setCoords();
+                      canvas.requestRenderAll();
+                      saveHistory();
+                      syncCanvasStateToReact();
+                    } else {
+                      const vpt = canvas.viewportTransform ? [...canvas.viewportTransform] : [1, 0, 0, 1, 0, 0];
+                      vpt[5] -= 50;
+                      canvas.setViewportTransform(vpt);
+                      canvas.requestRenderAll();
+                    }
+                  }}
+                  title={activeObject ? (lang === "bn" ? "নিচে সরান" : "Move Down") : (lang === "bn" ? "নিচে নিন" : "Pan Down")}
+                  className="w-6.5 h-6.5 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Arrow Right */}
+                <button
+                  onClick={() => {
+                    const canvas = canvasInstance;
+                    if (!canvas) return;
+                    const active = canvas.getActiveObject();
+                    if (active) {
+                      active.set("left", (active.left || 0) + 10);
+                      active.setCoords();
+                      canvas.requestRenderAll();
+                      saveHistory();
+                      syncCanvasStateToReact();
+                    } else {
+                      const vpt = canvas.viewportTransform ? [...canvas.viewportTransform] : [1, 0, 0, 1, 0, 0];
+                      vpt[4] -= 50;
+                      canvas.setViewportTransform(vpt);
+                      canvas.requestRenderAll();
+                    }
+                  }}
+                  title={activeObject ? (lang === "bn" ? "ডানে সরান" : "Move Right") : (lang === "bn" ? "ডানে নিন" : "Pan Right")}
+                  className="w-6.5 h-6.5 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
           </div>
@@ -6298,7 +6558,17 @@ export default function App() {
                 onMoveDown={handleMoveDown}
                 onToggleLock={toggleLockObject}
                 onDeleteLayer={deleteSelectedObject}
+                onCloneLayer={(obj) => {
+                  const canvas = fabricCanvasRef.current;
+                  if (!canvas) return;
+                  canvas.setActiveObject(obj);
+                  canvas.renderAll();
+                  setTimeout(() => {
+                    cloneSelectedObject();
+                  }, 50);
+                }}
                 lang={lang}
+                onOpenPrintPreview={handleOpenPrintPreview}
               />
             </div>
           </div>
@@ -6506,7 +6776,17 @@ export default function App() {
                       onMoveDown={handleMoveDown}
                       onToggleLock={toggleLockObject}
                       onDeleteLayer={deleteSelectedObject}
+                      onCloneLayer={(obj) => {
+                        const canvas = fabricCanvasRef.current;
+                        if (!canvas) return;
+                        canvas.setActiveObject(obj);
+                        canvas.renderAll();
+                        setTimeout(() => {
+                          cloneSelectedObject();
+                        }, 50);
+                      }}
                       lang={lang}
+                      onOpenPrintPreview={handleOpenPrintPreview}
                     />
                   </div>
                 )}
@@ -6727,6 +7007,20 @@ export default function App() {
         naturalWidth={croppingNaturalWidth}
         naturalHeight={croppingNaturalHeight}
       />
+
+      <AnimatePresence>
+        {isPrintModalOpen && (
+          <PrintModal
+            isOpen={isPrintModalOpen}
+            onClose={() => setIsPrintModalOpen(false)}
+            canvasDataUrl={printCanvasDataUrl}
+            lang={lang}
+            theme={theme}
+            canvasWidth={canvasWidth}
+            canvasHeight={canvasHeight}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Hidden Textarea for mobile OS keyboard summoning */}
       <textarea
