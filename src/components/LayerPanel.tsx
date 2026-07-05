@@ -13,7 +13,6 @@ import {
   Triangle,
   FileCode,
   Sparkles,
-  Printer,
   MoreVertical,
   Copy
 } from "lucide-react";
@@ -259,7 +258,7 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Quick Delete Layer with interception */}
+                  {/* Quick Delete Layer */}
                   <button
                     onClick={() => {
                       setDeletingObj(obj);
