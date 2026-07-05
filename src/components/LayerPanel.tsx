@@ -12,7 +12,10 @@ import {
   Circle,
   Triangle,
   FileCode,
-  Sparkles
+  Sparkles,
+  Printer,
+  MoreVertical,
+  Copy
 } from "lucide-react";
 import * as fabric from "fabric";
 
@@ -24,8 +27,10 @@ interface LayerPanelProps {
   onMoveDown: (obj: fabric.Object) => void;
   onToggleLock: (obj: fabric.Object) => void;
   onDeleteLayer: (obj: fabric.Object) => void;
+  onCloneLayer?: (obj: fabric.Object) => void;
   lang: "en" | "bn";
   theme?: "dark" | "light";
+  onOpenPrintPreview?: () => void;
 }
 
 export const LayerPanel: React.FC<LayerPanelProps> = ({
@@ -36,9 +41,14 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
   onMoveDown,
   onToggleLock,
   onDeleteLayer,
+  onCloneLayer,
   lang,
-  theme = "dark"
+  theme = "dark",
+  onOpenPrintPreview
 }) => {
+  const [openMenuIndex, setOpenMenuIndex] = React.useState<number | null>(null);
+  const [deletingObj, setDeletingObj] = React.useState<fabric.Object | null>(null);
+
   const getLayerDetails = (obj: any) => {
     const type = obj.type;
     
@@ -117,7 +127,7 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
 
   return (
     <div 
-      className={`w-full md:w-64 md:border-l border-none flex flex-col h-full shrink-0 select-none transition-colors duration-300 ${
+      className={`relative w-full md:w-64 md:border-l border-none flex flex-col h-full shrink-0 select-none transition-colors duration-300 ${
         theme === "light" 
           ? "bg-slate-100 border-indigo-100/80 text-zinc-900" 
           : "bg-zinc-900 border-zinc-800 text-zinc-200"
@@ -167,8 +177,11 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
             return (
               <div
                 key={index}
-                onClick={() => onSelectLayer(obj)}
-                className={`group flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+                onClick={() => {
+                  onSelectLayer(obj);
+                  setOpenMenuIndex(null);
+                }}
+                className={`relative group flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
                   isSelected
                     ? theme === "light"
                       ? "bg-rose-100/80 border-rose-300 text-rose-900 shadow-sm shadow-rose-500/5 font-semibold"
@@ -179,7 +192,7 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
                 }`}
               >
                 {/* Left Section: Icon and Label */}
-                <div className="flex items-center gap-2 max-w-[130px] overflow-hidden">
+                <div className="flex items-center gap-2 max-w-[100px] overflow-hidden">
                   {icon}
                   <span className="text-xs font-medium truncate select-none leading-none">
                     {name}
@@ -190,7 +203,10 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
                 <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                   {/* Lock/Unlock Toggle Button */}
                   <button
-                    onClick={() => onToggleLock(obj)}
+                    onClick={() => {
+                      onToggleLock(obj);
+                      setOpenMenuIndex(null);
+                    }}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                       isLocked
                         ? theme === "light"
@@ -205,10 +221,13 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
                     {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
                   </button>
 
-                  {/* Move Up (index !== 0 in reverse array) */}
+                  {/* Move Up */}
                   <button
                     disabled={index === 0}
-                    onClick={() => onMoveUp(obj)}
+                    onClick={() => {
+                      onMoveUp(obj);
+                      setOpenMenuIndex(null);
+                    }}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                       index === 0
                         ? theme === "light" ? "text-slate-300" : "text-zinc-700 cursor-not-allowed"
@@ -221,10 +240,13 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
                     <ChevronUp className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Move Down (index !== layers.length - 1 in reverse array) */}
+                  {/* Move Down */}
                   <button
                     disabled={index === layers.length - 1}
-                    onClick={() => onMoveDown(obj)}
+                    onClick={() => {
+                      onMoveDown(obj);
+                      setOpenMenuIndex(null);
+                    }}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                       index === layers.length - 1
                         ? theme === "light" ? "text-slate-300" : "text-zinc-700 cursor-not-allowed"
@@ -237,9 +259,12 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Quick Delete Layer */}
+                  {/* Quick Delete Layer with interception */}
                   <button
-                    onClick={() => onDeleteLayer(obj)}
+                    onClick={() => {
+                      setDeletingObj(obj);
+                      setOpenMenuIndex(null);
+                    }}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                       theme === "light"
                         ? "bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-zinc-500"
@@ -249,6 +274,47 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
+
+                  {/* Three Dot Options Button */}
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuIndex(openMenuIndex === index ? null : index);
+                      }}
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        openMenuIndex === index
+                          ? "bg-amber-500 text-zinc-950 font-bold"
+                          : theme === "light"
+                            ? "bg-slate-100 text-zinc-500 hover:bg-slate-200"
+                            : "bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                      }`}
+                      title={lang === "bn" ? "আরো অপশন" : "More Options"}
+                    >
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Popover/Dropdown Menu */}
+                    {openMenuIndex === index && (
+                      <div className={`absolute right-0 mt-1.5 rounded-lg shadow-xl py-1 z-55 min-w-[130px] border ${
+                        theme === "light"
+                          ? "bg-white border-zinc-200 text-zinc-800"
+                          : "bg-zinc-950 border-zinc-800 text-zinc-300"
+                      }`} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCloneLayer?.(obj);
+                            setOpenMenuIndex(null);
+                          }}
+                          className={`w-full text-left px-3 py-2 hover:bg-amber-500/10 hover:text-amber-400 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors`}
+                        >
+                          <Copy className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                          <span>{lang === "bn" ? "ডুপ্লিকেট লেয়ার" : "Duplicate Layer"}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -262,6 +328,46 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
           Sada Kagoj Designer
         </span>
       </div>
+
+      {/* Delete Confirmation Modal Overlay */}
+      {deletingObj && (
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className={`p-5 rounded-2xl border max-w-[210px] text-center shadow-2xl ${
+            theme === "light" ? "bg-white border-zinc-200" : "bg-zinc-950 border-zinc-800"
+          }`}>
+            <p className={`text-xs font-bold mb-4 leading-normal ${theme === "light" ? "text-zinc-800" : "text-zinc-200"}`}>
+              {lang === "bn" 
+                ? "আপনি কি নিশ্চিতভাবে এই লেয়ারটি মুছে ফেলতে চান?" 
+                : "Are you sure you want to delete this layer?"}
+            </p>
+            <div className="flex items-center justify-center gap-2.5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteLayer(deletingObj);
+                  setDeletingObj(null);
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-extrabold transition-colors cursor-pointer shadow-md shadow-rose-500/10"
+              >
+                {lang === "bn" ? "হ্যাঁ" : "Yes"}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeletingObj(null);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-colors cursor-pointer border ${
+                  theme === "light"
+                    ? "bg-slate-100 border-zinc-200 text-zinc-600 hover:bg-slate-200"
+                    : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800/80"
+                }`}
+              >
+                {lang === "bn" ? "না" : "No"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
