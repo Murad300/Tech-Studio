@@ -153,7 +153,7 @@ const tabNames: Record<string, { en: string; bn: string }> = {
   frame: { en: "Frame", bn: "ফ্রেম" },
   border: { en: "Border", bn: "বর্ডার" },
   opacity: { en: "Blend/Opacity", bn: "ব্লেন্ড/ওপাসিটি" },
-  layers: { en: "Layers", bn: "লেয়ার" },
+  layers: { en: "Arrangement", bn: "লেয়ার সাজানো" },
   actions: { en: "Actions", bn: "অ্যাকশন" },
   fill: { en: "Fill", bn: "রঙ" },
 };
@@ -242,16 +242,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const getTabsForType = (type: typeof formatting.type) => {
     if (!type) return [];
     if (type === "text") {
-      return ["text_format", "spacing", "color", "effects", "layers", "actions"];
+      return ["text_format", "spacing", "color", "effects", "layers"];
     }
     if (type === "image") {
-      return ["bg_remove", "crop", "filters", "adjust", "frame", "border", "opacity", "layers", "actions"];
+      return ["bg_remove", "crop", "filters", "adjust", "frame", "border", "opacity", "layers"];
     }
     if (type === "rect" || type === "circle" || type === "triangle") {
-      return ["fill", "border", "opacity", "layers", "actions"];
+      return ["fill", "border", "opacity", "layers"];
     }
     if (type === "group" || type === "activeSelection") {
-      return ["fill", "border", "opacity", "layers", "actions"];
+      return ["fill", "border", "opacity", "layers"];
     }
     return [];
   };
@@ -976,38 +976,35 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           {/* ─── BG REMOVE TAB (Image Specific) ─── */}
           {activeTab === "bg_remove" && formatting.type === "image" && (
             <div className="flex items-center gap-3 shrink-0 overflow-x-auto py-1 max-w-[90vw] scrollbar-none">
-              <span className="text-[10px] uppercase font-bold tracking-wider shrink-0 text-zinc-500">
-                {lang === "bn" ? "ব্যাকগ্রাউন্ড কাস্টমাইজেশন" : "Background Customization"}
-              </span>
-
-              <div className="h-5 w-[1px] bg-zinc-800 shrink-0" />
-
               <div className="flex items-center gap-2">
-                <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider shrink-0">
-                  {lang === "bn" ? "কোয়ালিটি:" : "Quality:"}
-                </span>
-                <div className="bg-zinc-900/60 p-0.5 rounded-lg flex border border-zinc-800 shrink-0">
-                  {[
-                    { id: "fast", label: "⚡ Fast" },
-                    { id: "balanced", label: "⭐ Balanced" },
-                    { id: "ultra", label: "🏆 Ultra" }
-                  ].map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setBgQuality(m.id as any)}
-                      className={`px-2 py-0.5 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
-                        bgQuality === m.id
-                          ? "bg-amber-400 text-zinc-950 font-black"
-                          : "text-zinc-400 hover:text-zinc-200"
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
+                {/* Quality Box */}
+                <div className="flex items-center gap-1.5 bg-zinc-950/80 px-2 py-1 rounded-xl border border-zinc-850 shrink-0 text-[10px] font-bold text-zinc-400">
+                  <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider shrink-0">
+                    {lang === "bn" ? "কোয়ালিটি:" : "Quality:"}
+                  </span>
+                  <div className="bg-zinc-900/60 p-0.5 rounded-lg flex border border-zinc-800/50 shrink-0">
+                    {[
+                      { id: "fast", label: "Fast" },
+                      { id: "balanced", label: "Balanced" },
+                      { id: "ultra", label: "Ultra" }
+                    ].map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setBgQuality(m.id as any)}
+                        className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
+                          bgQuality === m.id
+                            ? "bg-amber-400 text-zinc-950 font-black"
+                            : "text-zinc-400 hover:text-zinc-200"
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="h-5 w-[1px] bg-zinc-800 shrink-0" />
+                <div className="h-5 w-[1px] bg-zinc-850 shrink-0" />
 
                 <button
                   onClick={() => {
@@ -1026,27 +1023,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   ) : (
                     <>
                       <Sparkles className="w-3.5 h-3.5 text-zinc-950" />
-                      <span>{lang === "bn" ? "✨ অটো ব্যাকগ্রাউন্ড" : "✨ Auto BG Remove"}</span>
+                      <span>{lang === "bn" ? "অটো ব্যাকগ্রাউন্ড রিমুভার" : "Auto Background Remover"}</span>
                     </>
                   )}
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (setActiveMobileDrawer) {
-                      setActiveMobileDrawer("assets");
-                    }
-                    if (setActiveSidebarTab) {
-                      setActiveSidebarTab("backgrounds");
-                      setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent("open-manual-mask", { detail: { mode: "pc" } }));
-                      }, 300);
-                    }
-                  }}
-                  className="p-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 text-zinc-100 rounded-xl flex items-center gap-1.5 text-[10px] font-extrabold px-3 transition-all shrink-0 cursor-pointer shadow-md active:scale-95"
-                >
-                  <MousePointer className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>{lang === "bn" ? "🖥️ পিসি ফিক্স" : "🖥️ PC Fix"}</span>
                 </button>
 
                 <button
@@ -1061,10 +1040,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                       }, 300);
                     }
                   }}
-                  className="p-1.5 bg-gradient-to-r from-rose-600/20 to-pink-600/20 border border-rose-500/30 hover:from-rose-600/35 hover:to-pink-600/35 text-rose-300 rounded-xl flex items-center gap-1.5 text-[10px] font-extrabold px-3 transition-all shrink-0 cursor-pointer shadow-md active:scale-95"
+                  className="p-1.5 bg-gradient-to-r from-amber-600/20 to-rose-600/20 border border-amber-500/30 hover:from-amber-600/35 hover:to-rose-600/35 text-amber-300 rounded-xl flex items-center gap-1.5 text-[10px] font-extrabold px-3 transition-all shrink-0 cursor-pointer shadow-md active:scale-95 animate-pulse"
                 >
-                  <Fingerprint className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-                  <span>{lang === "bn" ? "📱 টাচ ফিক্স" : "📱 Touch Fix"}</span>
+                  <Brush className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{lang === "bn" ? "ম্যানুয়াল ব্যাকগ্রাউন্ড রিমুভার" : "Manual Background Remover"}</span>
                 </button>
               </div>
             </div>
@@ -1182,35 +1161,53 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           {/* ─── FRAME TAB (Masking) ─── */}
           {activeTab === "frame" && formatting.type === "image" && (
-            <div className="flex items-center gap-2.5 shrink-0">
-              <div className="flex items-center gap-1 bg-zinc-950/80 border border-zinc-800 rounded px-2 py-0.5">
-                <Frame className="w-3 h-3 text-amber-500" />
-                <span className="text-[9px] text-zinc-500 font-bold uppercase mr-1">Shape</span>
-                <select
-                  value={formatting.maskShape || "none"}
-                  onChange={(e) => applyImageAdjustment("maskShape", e.target.value)}
-                  className="bg-transparent text-zinc-200 text-[10px] focus:outline-none cursor-pointer py-0.5"
-                >
-                  <option value="none" className="bg-zinc-950">No Frame</option>
-                  <option value="rounded" className="bg-zinc-950">Rounded Square</option>
-                  <option value="circle" className="bg-zinc-950">Circle</option>
-                  <option value="heart" className="bg-zinc-950">Heart</option>
-                  <option value="star" className="bg-zinc-950">Star</option>
-                  <option value="hexagon" className="bg-zinc-950">Hexagon</option>
-                </select>
+            <div className="flex items-center gap-3 shrink-0 py-1 overflow-x-auto scrollbar-none max-w-[90vw]">
+              <span className="text-[10px] uppercase font-bold tracking-wider shrink-0 text-zinc-500 flex items-center gap-1">
+                <Frame className="w-3.5 h-3.5 text-amber-500" />
+                <span>{lang === "bn" ? "ফ্রেম শেপ" : "Frame Shape"}</span>
+              </span>
+              
+              <div className="flex items-center gap-1.5 bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-800 shrink-0">
+                {[
+                  { value: "none", label: lang === "bn" ? "কোনোটিই নয়" : "No Frame" },
+                  { value: "rounded", label: lang === "bn" ? "গোল চারকোণা" : "Rounded Sq" },
+                  { value: "circle", label: lang === "bn" ? "বৃত্তাকার" : "Circle" },
+                  { value: "heart", label: lang === "bn" ? "ভালোবাসা" : "Heart" },
+                  { value: "star", label: lang === "bn" ? "তারা" : "Star" },
+                  { value: "hexagon", label: lang === "bn" ? "ষড়ভুজ" : "Hexagon" }
+                ].map((item) => {
+                  const isSelected = (formatting.maskShape || "none") === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => applyImageAdjustment("maskShape", item.value)}
+                      className={`px-2 py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-amber-400 text-zinc-950 font-black shadow-sm"
+                          : "text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {formatting.maskShape === "rounded" && (
-                <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded">
-                  <span className="text-[8px] text-zinc-500 font-bold uppercase">Radius</span>
+                <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2.5 py-1 rounded-lg shrink-0">
+                  <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">
+                    {lang === "bn" ? "ব্যাসার্ধ:" : "Radius:"}
+                  </span>
                   <input
                     type="range"
                     min="0"
                     max="100"
                     value={formatting.cornerRadius || 0}
                     onChange={(e) => applyImageAdjustment("cornerRadius", parseInt(e.target.value))}
-                    className="w-14 accent-amber-500 cursor-pointer h-1"
+                    className="w-16 accent-amber-500 cursor-pointer h-1"
                   />
+                  <span className="text-[9px] text-zinc-400 font-mono w-6 text-right">{formatting.cornerRadius || 0}%</span>
                 </div>
               )}
             </div>
@@ -1218,49 +1215,144 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           {/* ─── BORDER / STROKE TAB (Image & Shapes) ─── */}
           {activeTab === "border" && (
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 py-1 overflow-x-auto scrollbar-none max-w-[90vw]">
               {formatting.type === "image" ? (
                 // Image Custom Border Controls
-                <div className="flex items-center gap-2.5 bg-zinc-950/80 border border-zinc-800 rounded px-2 py-0.5">
-                  <Palette className="w-3 h-3 text-amber-500" />
-                  
-                  {/* Stroke Width */}
-                  <div className="flex items-center gap-1">
-                    <span className="text-[8px] text-zinc-500 font-bold uppercase">Width</span>
+                <>
+                  <span className="text-[10px] uppercase font-bold tracking-wider shrink-0 text-zinc-500 flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{lang === "bn" ? "ইমেজ বর্ডার" : "Image Border"}</span>
+                  </span>
+
+                  {/* Stroke Width Slider */}
+                  <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2.5 py-1 rounded-lg shrink-0">
+                    <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">{lang === "bn" ? "প্রস্থ:" : "Width:"}</span>
                     <input
                       type="range"
                       min="0"
                       max="20"
                       value={formatting.strokeWidth || 0}
                       onChange={(e) => applyImageAdjustment("borderWidth", parseInt(e.target.value))}
-                      className="w-14 accent-amber-500 cursor-pointer h-1"
+                      className="w-16 accent-amber-500 cursor-pointer h-1"
+                    />
+                    <span className="text-[9px] text-zinc-400 font-mono w-5 text-right">{formatting.strokeWidth || 0}px</span>
+                  </div>
+
+                  {/* Stroke Style Buttons */}
+                  <div className="flex items-center gap-1.5 bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-800 shrink-0">
+                    {[
+                      { value: "solid", label: lang === "bn" ? "সলিড" : "Solid" },
+                      { value: "dashed", label: lang === "bn" ? "ড্যাশড" : "Dashed" },
+                      { value: "dotted", label: lang === "bn" ? "ডটেড" : "Dotted" }
+                    ].map((item) => {
+                      const isSelected = (formatting.borderStyle || "solid") === item.value;
+                      return (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => applyImageAdjustment("borderStyle", item.value)}
+                          className={`px-2 py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-amber-400 text-zinc-950 font-black shadow-sm"
+                              : "text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Stroke Color Picker */}
+                  <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2.5 py-1 rounded-lg shrink-0">
+                    <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">{lang === "bn" ? "রঙ:" : "Color:"}</span>
+                    <input
+                      type="color"
+                      value={formatting.stroke && formatting.stroke.startsWith("#") ? formatting.stroke : "#000000"}
+                      onChange={(e) => applyImageAdjustment("borderColor", e.target.value)}
+                      className="w-4 h-4 rounded border-0 bg-transparent cursor-pointer"
                     />
                   </div>
 
-                  {/* Stroke Style */}
-                  <select
-                    value={formatting.borderStyle || "solid"}
-                    onChange={(e) => applyImageAdjustment("borderStyle", e.target.value)}
-                    className="bg-transparent text-zinc-300 text-[9px] focus:outline-none cursor-pointer py-0.5"
-                  >
-                    <option value="solid" className="bg-zinc-950">Solid</option>
-                    <option value="dashed" className="bg-zinc-950">Dashed</option>
-                    <option value="dotted" className="bg-zinc-950">Dotted</option>
-                  </select>
-
-                  {/* Stroke Color */}
-                  <input
-                    type="color"
-                    value={formatting.stroke || "#000000"}
-                    onChange={(e) => applyImageAdjustment("borderColor", e.target.value)}
-                    className="w-4 h-4 rounded border-0 bg-transparent cursor-pointer"
-                  />
-                </div>
+                  {/* Quick Stroke Color Swatches for image */}
+                  <div className="h-5 w-[1px] bg-zinc-850 shrink-0" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    {[
+                      "#ffffff", "#000000", "#ef4444", "#f59e0b",
+                      "#10b981", "#3b82f6", "#8b5cf6"
+                    ].map((col) => (
+                      <button
+                        key={col}
+                        onClick={() => applyImageAdjustment("borderColor", col)}
+                        style={{ backgroundColor: col }}
+                        className={`w-3.5 h-3.5 rounded-full border border-zinc-700/60 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-xs ${
+                          formatting.stroke?.toLowerCase() === col && (formatting.strokeWidth || 0) > 0 ? "ring-1 ring-amber-400 border-white scale-110" : ""
+                        }`}
+                        title={col}
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
                 // Shape Stroke/Border controls
                 <>
-                  <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded">
-                    <span className="text-[9px] text-zinc-500 font-mono uppercase">Border</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider shrink-0 text-zinc-500 flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{lang === "bn" ? "বর্ডার" : "Shape Border"}</span>
+                  </span>
+
+                  {/* Border Width Slider */}
+                  <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2.5 py-1 rounded-lg shrink-0">
+                    <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">{lang === "bn" ? "প্রস্থ:" : "Width:"}</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="30"
+                      value={formatting.strokeWidth || 0}
+                      onChange={(e) => applyStyleUpdate("strokeWidth", parseInt(e.target.value) || 0)}
+                      className="w-16 accent-amber-500 cursor-pointer h-1"
+                    />
+                    <span className="text-[9px] text-zinc-400 font-mono w-5 text-right">{formatting.strokeWidth || 0}px</span>
+                  </div>
+
+                  {/* Border Style Buttons */}
+                  <div className="flex items-center gap-1.5 bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-800 shrink-0">
+                    {[
+                      { value: "solid", label: lang === "bn" ? "সলিড" : "Solid" },
+                      { value: "dashed", label: lang === "bn" ? "ড্যাশড" : "Dashed" },
+                      { value: "dotted", label: lang === "bn" ? "ডটেড" : "Dotted" }
+                    ].map((item) => {
+                      const currentStyle = !formatting.strokeDashArray || formatting.strokeDashArray.length === 0
+                        ? "solid"
+                        : formatting.strokeDashArray[0] === 8
+                        ? "dashed"
+                        : "dotted";
+                      const isSelected = currentStyle === item.value;
+                      return (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => {
+                            let val: number[] | undefined = undefined;
+                            if (item.value === "dashed") val = [8, 4];
+                            else if (item.value === "dotted") val = [2, 3];
+                            applyStyleUpdate("strokeDashArray", val);
+                          }}
+                          className={`px-2 py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-amber-400 text-zinc-950 font-black shadow-sm"
+                              : "text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Border Color Picker */}
+                  <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2.5 py-1 rounded-lg shrink-0">
+                    <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">{lang === "bn" ? "রঙ:" : "Color:"}</span>
                     <input
                       type="color"
                       value={formatting.stroke && formatting.stroke.startsWith("#") ? formatting.stroke : "#000000"}
@@ -1269,66 +1361,27 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     />
                   </div>
 
-                  {/* Border Style Selection */}
-                  <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded">
-                    <span className="text-[9px] text-zinc-500 font-mono uppercase">Style</span>
-                    <select
-                      value={
-                        !formatting.strokeDashArray || formatting.strokeDashArray.length === 0
-                          ? "solid"
-                          : formatting.strokeDashArray[0] === 8
-                          ? "dashed"
-                          : "dotted"
-                      }
-                      onChange={(e) => {
-                        const style = e.target.value;
-                        let val: number[] | undefined = undefined;
-                        if (style === "dashed") val = [8, 4];
-                        else if (style === "dotted") val = [2, 3];
-                        applyStyleUpdate("strokeDashArray", val);
-                      }}
-                      className="bg-transparent text-zinc-300 text-[9px] focus:outline-none cursor-pointer py-0.5"
-                    >
-                      <option value="solid" className="bg-zinc-950 text-zinc-200">Solid</option>
-                      <option value="dashed" className="bg-zinc-950 text-zinc-200">Dashed</option>
-                      <option value="dotted" className="bg-zinc-950 text-zinc-200">Dotted</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded">
-                    <span className="text-[9px] text-zinc-500 font-mono uppercase">Width</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="30"
-                      value={formatting.strokeWidth || 0}
-                      onChange={(e) => applyStyleUpdate("strokeWidth", parseInt(e.target.value) || 0)}
-                      className="w-14 accent-amber-500 cursor-pointer h-1"
-                    />
-                    <span className="text-[9px] text-zinc-400 font-mono w-4 text-right">{formatting.strokeWidth || 0}</span>
-                  </div>
-
                   {formatting.type === "rect" && (
-                    <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded">
-                      <span className="text-[9px] text-zinc-500 font-mono uppercase">Round</span>
+                    <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2.5 py-1 rounded-lg shrink-0">
+                      <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">{lang === "bn" ? "কোণা গোল:" : "Round:"}</span>
                       <input
                         type="range"
                         min="0"
                         max="80"
                         value={formatting.cornerRadius || 0}
                         onChange={(e) => applyStyleUpdate("cornerRadius", parseInt(e.target.value) || 0)}
-                        className="w-14 accent-amber-500 cursor-pointer h-1"
+                        className="w-16 accent-amber-500 cursor-pointer h-1"
                       />
-                      <span className="text-[9px] text-zinc-400 font-mono w-4 text-right">{formatting.cornerRadius || 0}</span>
+                      <span className="text-[9px] text-zinc-400 font-mono w-5 text-right">{formatting.cornerRadius || 0}px</span>
                     </div>
                   )}
 
-                  {/* Quick Stroke Color Swatches */}
-                  <div className="h-5 w-[1px] bg-zinc-800 shrink-0 mx-1" />
+                  {/* Quick Stroke Color Swatches for shape */}
+                  <div className="h-5 w-[1px] bg-zinc-850 shrink-0" />
                   <div className="flex items-center gap-1 shrink-0">
                     {[
-                      "#ffffff", "#000000", "#e4e4e7", "#ef4444", "#f97316", "#f59e0b",
-                      "#10b981", "#3b82f6", "#8b5cf6", "#ec4899"
+                      "#ffffff", "#000000", "#ef4444", "#f97316", "#f59e0b",
+                      "#10b981", "#3b82f6", "#8b5cf6"
                     ].map((col) => (
                       <button
                         key={col}
@@ -1353,10 +1406,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           {/* ─── BLEND & OPACITY TAB ─── */}
           {activeTab === "opacity" && (
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 py-1 overflow-x-auto scrollbar-none max-w-[90vw]">
+              <span className="text-[10px] uppercase font-bold tracking-wider shrink-0 text-zinc-500 flex items-center gap-1">
+                <Sliders className="w-3.5 h-3.5 text-amber-500" />
+                <span>{lang === "bn" ? "ব্লেন্ড ও ওপাসিটি" : "Blend & Opacity"}</span>
+              </span>
+
               {/* Opacity slider */}
-              <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded">
-                <span className="text-[9px] text-zinc-500 font-mono uppercase">Opacity</span>
+              <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800 px-2.5 py-1 rounded-lg shrink-0">
+                <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider">{lang === "bn" ? "ওপাসিটি:" : "Opacity:"}</span>
                 <input
                   type="range"
                   min="0"
@@ -1364,26 +1422,37 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   step="0.05"
                   value={formatting.opacity ?? 1}
                   onChange={(e) => applyStyleUpdate("opacity", parseFloat(e.target.value))}
-                  className="w-14 accent-amber-500 cursor-pointer h-1"
+                  className="w-16 accent-amber-500 cursor-pointer h-1"
                 />
-                <span className="text-[9px] text-zinc-400 font-mono w-6 text-right">{Math.round((formatting.opacity ?? 1) * 100)}%</span>
+                <span className="text-[9px] text-zinc-400 font-mono w-7 text-right">{Math.round((formatting.opacity ?? 1) * 100)}%</span>
               </div>
 
-              {/* Blend Mode Dropdown */}
-              <div className="flex items-center gap-1 bg-zinc-950/80 border border-zinc-800 rounded px-2 py-0.5">
-                <span className="text-[9px] text-zinc-500 font-mono uppercase mr-1">Blend</span>
-                <select
-                  value={formatting.blendMode || "normal"}
-                  onChange={(e) => applyStyleUpdate("blendMode", e.target.value)}
-                  className="bg-transparent text-zinc-200 text-[10px] focus:outline-none cursor-pointer py-0.5"
-                >
-                  <option value="normal" className="bg-zinc-950">Normal</option>
-                  <option value="multiply" className="bg-zinc-950">Multiply</option>
-                  <option value="screen" className="bg-zinc-950">Screen</option>
-                  <option value="overlay" className="bg-zinc-950">Overlay</option>
-                  <option value="darken" className="bg-zinc-950">Darken</option>
-                  <option value="lighten" className="bg-zinc-950">Lighten</option>
-                </select>
+              {/* Blend Mode Buttons */}
+              <div className="flex items-center gap-1.5 bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-800 shrink-0">
+                {[
+                  { value: "normal", label: lang === "bn" ? "সাধারণ" : "Normal" },
+                  { value: "multiply", label: lang === "bn" ? "মাল্টিপ্লাই" : "Multiply" },
+                  { value: "screen", label: lang === "bn" ? "স্ক্রিন" : "Screen" },
+                  { value: "overlay", label: lang === "bn" ? "ওভারলে" : "Overlay" },
+                  { value: "darken", label: lang === "bn" ? "ডার্কেন" : "Darken" },
+                  { value: "lighten", label: lang === "bn" ? "লাইটেন" : "Lighten" }
+                ].map((item) => {
+                  const isSelected = (formatting.blendMode || "normal") === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => applyStyleUpdate("blendMode", item.value)}
+                      className={`px-2 py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-amber-400 text-zinc-950 font-black shadow-sm"
+                          : "text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
