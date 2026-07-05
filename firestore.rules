@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    match /face_hashes/{docId} {
+      allow read, write: if true;
+    }
+
+    match /user_chats/{userId} {
+      allow read, write: if true;
+    }
+
+    match /user_images/{imageId} {
+      allow read, write: if true;
+    }
+
+    // Default deny for other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

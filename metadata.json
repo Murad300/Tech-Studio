@@ -1,0 +1,6 @@
+{
+  "name": "Tech Studio",
+  "description": "একটি কোলাহলমুক্ত, আধুনিক ও চমৎকার ইমেজ ও ভেক্টর এডিটর (Canva-style), যেখানে আপনি জ্যামিতিক আকার, স্টাইলিশ টাইপোগ্রাফি এবং ছবি যুক্ত করে আপনার সৃজনশীলতাকে ফুটিয়ে তুলতে পারবেন কোনো খরচ ছাড়াই।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
