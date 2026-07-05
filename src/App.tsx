@@ -275,8 +275,8 @@ export default function App() {
     const handleResize = () => {
       const parent = document.getElementById("canvas-viewport-container");
       if (parent) {
-        const containerWidth = parent.clientWidth - (isMobile ? 24 : 96);
-        const containerHeight = parent.clientHeight - (isMobile ? 24 : 96);
+        const containerWidth = parent.clientWidth - (isMobile ? 12 : 32);
+        const containerHeight = parent.clientHeight - (isMobile ? 12 : 32);
         const scaleX = containerWidth / canvasWidth;
         const scaleY = containerHeight / canvasHeight;
         const fitZoom = Math.min(scaleX, scaleY, 1) * 0.95;
@@ -5924,7 +5924,7 @@ export default function App() {
             ? "w-[760px]" 
             : isExploreActive 
               ? "w-[440px]" 
-              : "w-80" 
+              : "w-[260px]" 
           : "w-0 overflow-hidden border-r-0"
       } ${
         theme === "light"
@@ -5937,7 +5937,7 @@ export default function App() {
               ? "w-[760px]" 
               : isExploreActive 
                 ? "w-[440px]" 
-                : "w-80" 
+                : "w-[260px]" 
             : "w-0"
         }`}>
           <Sidebar
@@ -6020,7 +6020,7 @@ export default function App() {
       }`} id="editor-workspace-container">
         
         {/* PREMIUM UPPER NAVBAR */}
-        <header className={`h-16 border-b flex items-center justify-between z-10 select-none transition-all duration-300 px-3 md:px-6 ${
+        <header className={`h-11 border-b flex items-center justify-between z-10 select-none transition-all duration-300 px-3 md:px-4 ${
           theme === "light"
             ? "border-indigo-100/80 bg-white shadow-xs"
             : "border-zinc-800 bg-zinc-950"
@@ -6029,7 +6029,7 @@ export default function App() {
             {/* Back to Home Dashboard */}
             <button
               onClick={() => setWorkspace("home")}
-              className={`p-1.5 md:p-2 rounded-xl transition-all cursor-pointer border text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0 select-none ${
+              className={`p-1 md:py-1 md:px-2.5 rounded-xl transition-all cursor-pointer border text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0 select-none ${
                 theme === "light"
                   ? "text-zinc-700 bg-white border-indigo-100 hover:bg-slate-50 hover:text-zinc-900 shadow-sm"
                   : "text-zinc-400 bg-zinc-950 border-zinc-800 hover:bg-zinc-900 hover:text-white"
@@ -6105,7 +6105,7 @@ export default function App() {
             {/* Quick Print Button */}
             <button
               onClick={handleOpenPrintPreview}
-              className="flex items-center gap-1.5 md:gap-2 py-2 px-3 md:px-4.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/10 transition-transform active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 md:gap-2 py-1 md:py-1.5 px-3 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/10 transition-transform active:scale-95 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span className="hidden md:inline">{lang === "bn" ? "প্রিন্ট করুন" : "Quick Print"}</span>
@@ -6114,7 +6114,7 @@ export default function App() {
             {/* Export High-Res PNG Button */}
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex items-center gap-1.5 md:gap-2 py-2 px-3 md:px-4.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-transform active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 md:gap-2 py-1 md:py-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-transform active:scale-95 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span className="hidden md:inline">{t.btnDownload}</span>
@@ -6129,7 +6129,7 @@ export default function App() {
           {/* ISOLATED VIEWPORT CAMERA WINDOW */}
           <div 
             id="canvas-viewport-container" 
-            className="flex-1 overflow-auto p-4 sm:p-6 md:p-12 flex items-center justify-center relative scrollbar-thin scrollbar-thumb-zinc-800"
+            className="flex-1 overflow-auto p-2 sm:p-3 md:p-4 flex items-center justify-center relative scrollbar-thin scrollbar-thumb-zinc-800"
           >
             {/* FLOATING ACTION OVERLAY PILL (Undo, Redo, Divider, Assets, Layers) */}
             <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-3.5 py-2 rounded-full flex items-center gap-3.5 shadow-2xl backdrop-blur-md z-30 select-none max-w-[90vw] border transition-all duration-300 ${
@@ -6218,7 +6218,7 @@ export default function App() {
             </div>
 
             {/* Subtle Outer Frame Shadow and Border isolation */}
-            <div className={`relative p-8 rounded-2xl border shadow-2xl flex items-center justify-center min-w-fit min-h-fit transition-all duration-300 ${
+            <div className={`relative p-3 rounded-xl border shadow-2xl flex items-center justify-center min-w-fit min-h-fit transition-all duration-300 ${
               theme === "light"
                 ? "bg-white border-indigo-100 shadow-indigo-150/50"
                 : "bg-zinc-950 border-zinc-800/80 shadow-black/80"
@@ -6375,8 +6375,8 @@ export default function App() {
                     } else {
                       const parent = document.getElementById("canvas-viewport-container");
                       if (parent) {
-                        const containerWidth = parent.clientWidth - 96;
-                        const containerHeight = parent.clientHeight - 96;
+                        const containerWidth = parent.clientWidth - 32;
+                        const containerHeight = parent.clientHeight - 32;
                         const scaleX = containerWidth / canvasWidth;
                         const scaleY = containerHeight / canvasHeight;
                         const fitZoom = Math.min(scaleX, scaleY, 1) * 0.95;
@@ -6542,13 +6542,13 @@ export default function App() {
 
           {/* VISUAL LAYER MANAGEMENT PANEL */}
           <div className={`hidden md:flex h-full shrink-0 transition-all duration-300 ${
-            isLayersOpen ? "w-64" : "w-0 overflow-hidden border-l-0"
+            isLayersOpen ? "w-52" : "w-0 overflow-hidden border-l-0"
           } ${
             theme === "light"
               ? "border-l border-indigo-100/80 bg-slate-100"
               : "border-l border-zinc-800 bg-zinc-950"
           }`}>
-            <div className="w-64 h-full">
+            <div className="w-52 h-full">
               <LayerPanel
                 theme={theme}
                 layers={layers}
