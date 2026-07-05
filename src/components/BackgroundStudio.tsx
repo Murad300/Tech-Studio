@@ -197,6 +197,7 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0 });
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [isHudCollapsed, setIsHudCollapsed] = useState(true);
   
   const maskUndoStackRef = useRef<ImageData[]>([]);
   const maskRedoStackRef = useRef<ImageData[]>([]);
@@ -265,10 +266,11 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
   };
 
   // Touch Fix States
-  const [isTouchFix, setIsTouchFix] = useState(false);
+  const [isTouchFix, setIsTouchFix] = useState(true);
   const [brushSoftness, setBrushSoftness] = useState(25);
   const [isSmartBrush, setIsSmartBrush] = useState(true);
   const [isMagneticEdge, setIsMagneticEdge] = useState(true);
+  const [isPressureSensitive, setIsPressureSensitive] = useState(true); // default to true for premium experience!
   const originalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const originalCtxRef = useRef<CanvasRenderingContext2D | null>(null);
 
@@ -291,18 +293,15 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
 
   useEffect(() => {
     if (isMaskEditorOpen) {
-      if (isMobile) {
-        setIsTouchFix(true);
-      }
+      setIsTouchFix(true);
       initMaskWorkspace();
     }
-  }, [isMaskEditorOpen, isMobile]);
+  }, [isMaskEditorOpen]);
 
   // Handle open-manual-mask event from external bottom toolbar trigger
   useEffect(() => {
-    const handleOpenManualMask = (e: any) => {
-      const mode = e.detail?.mode || "pc";
-      setIsTouchFix(mode === "touch");
+    const handleOpenManualMask = () => {
+      setIsTouchFix(true);
       setActiveTab("remove");
       setIsMaskEditorOpen(true);
     };
@@ -593,6 +592,10 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
     const opacity = imgObj.opacity;
     const shadow = imgObj.shadow;
     const clipPath = imgObj.clipPath;
+    const cropX = imgObj.cropX;
+    const cropY = imgObj.cropY;
+    const width = imgObj.width;
+    const height = imgObj.height;
 
     // Get contour properties to preserve
     const contourBorderWidth = (imgObj as any).contourBorderWidth || 0;
@@ -615,6 +618,10 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
         opacity,
         shadow,
         clipPath,
+        cropX,
+        cropY,
+        width,
+        height,
         cornerStyle: "circle"
       });
 
@@ -1114,6 +1121,12 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
     setIsDrawing(true);
     drawingPointsRef.current = [{ x, y }];
 
+    // Read real pointer pressure if stylus sensitivity is enabled
+    const currentPressure = e.pressure !== undefined && e.pressure > 0 ? e.pressure : 1.0;
+    const dynamicBrushSize = isPressureSensitive 
+      ? Math.max(3, brushSize * (0.25 + currentPressure * 1.5)) 
+      : brushSize;
+
     if (maskTool === "quick" || maskTool === "magic") {
       runFloodFillMask(Math.round(x), Math.round(y));
     } else if (isTouchFix && (maskTool === "brush" || maskTool === "eraser" || maskTool === "restore")) {
@@ -1136,7 +1149,7 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
           originalCtxRef.current,
           x,
           y,
-          brushSize / 2,
+          dynamicBrushSize / 2,
           brushSoftness,
           maskTool === "eraser" || maskTool === "brush",
           isSmartBrush,
@@ -1159,16 +1172,16 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
         [ctx, offCtx].forEach((c) => {
           c.save();
           c.beginPath();
-          c.lineWidth = brushSize;
+          c.lineWidth = dynamicBrushSize;
           c.lineCap = "round";
           if (maskTool === "eraser" || maskTool === "brush") {
             c.globalCompositeOperation = "destination-out";
-            c.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+            c.arc(x, y, dynamicBrushSize / 2, 0, Math.PI * 2);
             c.fillStyle = "black";
             c.fill();
           } else if (maskTool === "restore") {
             c.globalCompositeOperation = "source-over";
-            c.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+            c.arc(x, y, dynamicBrushSize / 2, 0, Math.PI * 2);
             c.clip();
             if (originalImgRef.current) {
               c.drawImage(originalImgRef.current, 0, 0);
@@ -1214,6 +1227,12 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
     const ctx = maskCtxRef.current;
     const offCtx = offscreenCtxRef.current;
 
+    // Read real pointer pressure if stylus sensitivity is enabled
+    const currentPressure = e.pressure !== undefined && e.pressure > 0 ? e.pressure : 1.0;
+    const dynamicBrushSize = isPressureSensitive 
+      ? Math.max(3, brushSize * (0.25 + currentPressure * 1.5)) 
+      : brushSize;
+
     if (isTouchFix && (maskTool === "brush" || maskTool === "eraser" || maskTool === "restore")) {
       const points = drawingPointsRef.current;
       if (points.length > 0 && originalCtxRef.current) {
@@ -1233,7 +1252,7 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
             originalCtxRef.current,
             ix,
             iy,
-            brushSize / 2,
+            dynamicBrushSize / 2,
             brushSoftness,
             maskTool === "eraser" || maskTool === "brush",
             isSmartBrush,
@@ -1250,7 +1269,7 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
 
     [ctx, offCtx].forEach((c) => {
       c.beginPath();
-      c.lineWidth = brushSize;
+      c.lineWidth = dynamicBrushSize;
       c.lineCap = "round";
       c.lineJoin = "round";
     });
@@ -2598,12 +2617,12 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
                   {isTouchFix ? (
                     <>
                       <Fingerprint className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-                      <span>{lang === "bn" ? "টাচ ফিক্স স্টুডিও" : "Touch Fix Studio"}</span>
+                      <span>{lang === "bn" ? "ইন্টেলিজেন্ট টাচ ইরেজার" : "Intelligent Touch Eraser"}</span>
                     </>
                   ) : (
                     <>
                       <Paintbrush className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                      <span>{lang === "bn" ? "ম্যানুয়াল স্টুডিও" : "Mobile Masker"}</span>
+                      <span>{lang === "bn" ? "প্রিসিশন মাস্ক পেইন্টার" : "Precision Mask Painter"}</span>
                     </>
                   )}
                 </span>
@@ -2678,78 +2697,146 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
 
               {/* 5X Zoom Precision Magnifier (Touch/Mobile) */}
               {showMagnifier && (
-                <div className="absolute top-4 left-4 z-50 bg-zinc-900/95 border border-zinc-800 p-2 rounded-2xl shadow-2xl flex flex-col items-center gap-1.5 backdrop-blur-md pointer-events-none transition-all duration-200">
-                  <div className="relative w-28 h-28 rounded-full border-2 border-amber-400 overflow-hidden bg-zinc-950 shadow-inner">
-                    <canvas ref={magnifierCanvasMobileRef} width={140} height={140} className="w-full h-full" />
+                <div className="absolute top-4 left-4 z-50 pointer-events-none transition-all duration-200">
+                  <div className="relative w-20 h-20 rounded-full border-2 border-amber-400 overflow-hidden bg-zinc-950 shadow-2xl">
+                    <canvas ref={magnifierCanvasMobileRef} width={100} height={100} className="w-full h-full" />
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-white" />
-                      <div className="absolute w-6 h-[1px] bg-rose-500/60" />
-                      <div className="absolute h-6 w-[1px] bg-rose-500/60" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500 ring-1 ring-white" />
+                      <div className="absolute w-4 h-[1px] bg-rose-500/60" />
+                      <div className="absolute h-4 w-[1px] bg-rose-500/60" />
                     </div>
                   </div>
-                  <span className="text-[9px] font-black text-amber-400 tracking-wider flex items-center gap-1 uppercase">
-                    <ZoomIn className="w-3 h-3 text-amber-400" />
-                    <span>5X ZOOM</span>
-                  </span>
                 </div>
               )}
 
               {/* Compact Floating HUD Zoom/Pan Controls */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-zinc-900/95 border border-zinc-800/80 px-3.5 py-1.5 rounded-xl flex items-center gap-3.5 z-10 shadow-2xl">
-                {/* Undo/Redo */}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={undoMask}
-                    disabled={!canUndoMask}
-                    className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-355 disabled:opacity-30 flex items-center justify-center active:scale-95 transition-all"
-                    title="Undo Brush stroke"
-                  >
-                    <Undo2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={redoMask}
-                    disabled={!canRedoMask}
-                    className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-355 disabled:opacity-30 flex items-center justify-center active:scale-95 transition-all"
-                    title="Redo Brush stroke"
-                  >
-                    <Redo2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="w-[1px] h-4 bg-zinc-850" />
-
-                {/* Zoom */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setMaskZoom(prev => Math.max(prev / 1.15, 0.5))}
-                    className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-400 flex items-center justify-center active:scale-95"
-                  >
-                    <ZoomOut className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="text-[10px] font-mono font-bold text-amber-400 min-w-[32px] text-center">
-                    {Math.round(maskZoom * 100)}%
-                  </span>
-                  <button
-                    onClick={() => setMaskZoom(prev => Math.min(prev * 1.15, 8))}
-                    className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-400 flex items-center justify-center active:scale-95"
-                  >
-                    <ZoomIn className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="w-[1px] h-4 bg-zinc-850" />
-
-                {/* Reset View */}
+              {isHudCollapsed ? (
                 <button
-                  onClick={() => {
-                    setMaskZoom(1);
-                    setMaskPan({ x: 0, y: 0 });
-                  }}
-                  className="px-2 py-1 rounded bg-zinc-950 border border-zinc-800 text-[9px] font-bold text-zinc-400 active:scale-95 transition-all"
+                  type="button"
+                  onClick={() => setIsHudCollapsed(false)}
+                  className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-[10px] px-4 py-2 rounded-full z-10 shadow-xl flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                 >
-                  Reset
+                  <Compass className="w-3.5 h-3.5 animate-pulse" />
+                  <span>{lang === "bn" ? "জুম ও প্যান কন্ট্রোলস" : "Navigation & Zoom"}</span>
                 </button>
-              </div>
+              ) : (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-zinc-900/95 border border-zinc-800/80 p-2 md:px-3.5 md:py-1.5 rounded-xl flex flex-col sm:flex-row items-center gap-2 md:gap-3.5 z-10 shadow-2xl max-w-[95vw]">
+                  <div className="flex items-center gap-3">
+                    {/* Undo/Redo */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={undoMask}
+                        disabled={!canUndoMask}
+                        className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-355 disabled:opacity-30 flex items-center justify-center active:scale-95 transition-all"
+                        title="Undo Brush stroke"
+                      >
+                        <Undo2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={redoMask}
+                        disabled={!canRedoMask}
+                        className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-355 disabled:opacity-30 flex items-center justify-center active:scale-95 transition-all"
+                        title="Redo Brush stroke"
+                      >
+                        <Redo2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="w-[1px] h-4 bg-zinc-850" />
+
+                    {/* Zoom */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setMaskZoom(prev => Math.max(prev / 1.15, 0.5))}
+                        className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-400 flex items-center justify-center active:scale-95"
+                      >
+                        <ZoomOut className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-[10px] font-mono font-bold text-amber-400 min-w-[32px] text-center">
+                        {Math.round(maskZoom * 100)}%
+                      </span>
+                      <button
+                        onClick={() => setMaskZoom(prev => Math.min(prev * 1.15, 8))}
+                        className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-400 flex items-center justify-center active:scale-95"
+                      >
+                        <ZoomIn className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="w-[1px] h-4 bg-zinc-850" />
+
+                    {/* Reset View */}
+                    <button
+                      onClick={() => {
+                        setMaskZoom(1);
+                        setMaskPan({ x: 0, y: 0 });
+                      }}
+                      className="px-2 py-1 rounded bg-zinc-950 border border-zinc-800 text-[9px] font-bold text-zinc-400 active:scale-95 transition-all"
+                    >
+                      Reset
+                    </button>
+
+                    <div className="w-[1px] h-4 bg-zinc-850" />
+
+                    {/* Collapse Button */}
+                    <button
+                      type="button"
+                      onClick={() => setIsHudCollapsed(true)}
+                      className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-rose-400 hover:text-rose-300 flex items-center justify-center active:scale-95 transition-all"
+                      title={lang === "bn" ? "লুকান" : "Collapse"}
+                    >
+                      <Minimize2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Mobile/Touch Panning D-Pad */}
+                  <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-zinc-800/80 pt-1.5 sm:pt-0 sm:pl-2.5">
+                    <div className="grid grid-cols-3 gap-0.5 items-center justify-center w-[72px] h-[48px]">
+                      <div></div>
+                      <button
+                        onClick={() => setMaskPan(prev => ({ ...prev, y: prev.y + 40 }))}
+                        title={lang === "bn" ? "উপরে নিন" : "Pan Up"}
+                        className="w-5 h-5 rounded bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </button>
+                      <div></div>
+
+                      <button
+                        onClick={() => setMaskPan(prev => ({ ...prev, x: prev.x + 40 }))}
+                        title={lang === "bn" ? "বামে নিন" : "Pan Left"}
+                        className="w-5 h-5 rounded bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => setMaskPan({ x: 0, y: 0 })}
+                        title={lang === "bn" ? "মাঝখানে আনুন" : "Center View"}
+                        className="w-5 h-5 rounded bg-zinc-950 border border-zinc-850 hover:bg-zinc-800 text-zinc-500 hover:text-white text-[8px] font-bold flex items-center justify-center transition-colors cursor-pointer"
+                      >
+                        C
+                      </button>
+                      <button
+                        onClick={() => setMaskPan(prev => ({ ...prev, x: prev.x - 40 }))}
+                        title={lang === "bn" ? "ডানে নিন" : "Pan Right"}
+                        className="w-5 h-5 rounded bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                      >
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+
+                      <div></div>
+                      <button
+                        onClick={() => setMaskPan(prev => ({ ...prev, y: prev.y - 40 }))}
+                        title={lang === "bn" ? "নিচে নিন" : "Pan Down"}
+                        className="w-5 h-5 rounded bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer"
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </button>
+                      <div></div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Contextual Action Overlay Tray (Sliders / Lasso Actions) */}
@@ -2819,6 +2906,25 @@ export const BackgroundStudio: React.FC<BackgroundStudioProps> = ({
                       </span>
                     </div>
                   )}
+
+                  <div className="bg-zinc-900/40 border border-zinc-900/60 p-2.5 rounded-xl flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isPressureSensitive}
+                          onChange={(e) => setIsPressureSensitive(e.target.checked)}
+                          className="accent-amber-400 w-3.5 h-3.5 rounded border-zinc-750 bg-zinc-800 cursor-pointer"
+                        />
+                        <span className="text-[9.5px] font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1">
+                          🎨 {lang === "bn" ? "স্টাইলাস প্রেসার সেন্সিটিভিটি" : "Stylus Pressure Sensitivity"}
+                        </span>
+                      </label>
+                    </div>
+                    <span className="text-[8px] font-black text-amber-400 uppercase tracking-wider shrink-0">
+                      ⚡ STYLUS / TOUCH
+                    </span>
+                  </div>
                 </div>
               )}
 
