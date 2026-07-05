@@ -1,0 +1,200 @@
+{
+  "background": [
+    {
+      "name": "TransparentTextures",
+      "logo": "https://www.transparenttextures.com/favicon.ico",
+      "url": "https://www.transparenttextures.com/",
+      "license": "CC0",
+      "tag": "CSS Textures",
+      "iframeSupported": true,
+      "note": "১-ক্লিকে CSS কোড কপি করা যায়"
+    },
+    {
+      "name": "HeroPatterns",
+      "logo": "https://heropatterns.com/favicon.ico",
+      "url": "https://heropatterns.com/",
+      "license": "Free, MIT",
+      "tag": "SVG Overlays",
+      "iframeSupported": true,
+      "note": "কালার চেঞ্জ করে SVG ডাউনলোড"
+    },
+    {
+      "name": "Cool Backgrounds",
+      "logo": "https://coolbackgrounds.co/images/favicon-fe5a0a4e.png",
+      "url": "https://coolbackgrounds.co/",
+      "license": "Free for Commercial",
+      "tag": "Gradients & Lines",
+      "iframeSupported": true,
+      "note": "ডাইনামিক ফ্লুইড কালার এবং লো-পলি ব্যাকগ্রাউন্ড জেনারেটর"
+    }
+  ],
+  "stickers": [
+    {
+      "name": "StickPNG",
+      "logo": "https://www.stickpng.com/favicon.ico",
+      "url": "https://www.stickpng.com/",
+      "license": "Free for Personal",
+      "tag": "Transparent PNG",
+      "iframeSupported": true,
+      "note": "ট্রান্সপারেন্ট PNG, সার্চ কাজ করে"
+    },
+    {
+      "name": "Flaticon Stickers",
+      "logo": "https://www.flaticon.com/favicon.ico",
+      "url": "https://www.flaticon.com/free-stickers",
+      "license": "Free for Personal/Commercial",
+      "tag": "Stickers",
+      "iframeSupported": false,
+      "note": "নতুন ট্যাবে সার্চ এবং ডাউনলোড করুন"
+    },
+    {
+      "name": "PNGWing Stickers",
+      "logo": "https://www.pngwing.com/favicon.ico",
+      "url": "https://www.pngwing.com/",
+      "license": "Free for Personal/Commercial",
+      "tag": "Transparent Graphics",
+      "iframeSupported": false,
+      "note": "লক্ষাধিক সম্পূর্ণ ফ্রি ট্রান্সপারেন্ট পিএনজি ক্লিপার্ট"
+    }
+  ],
+  "photos": [
+    {
+      "name": "Unsplash Backgrounds",
+      "logo": "https://unsplash.com/favicon.ico",
+      "url": "https://unsplash.com/s/photos/background",
+      "license": "Free for Commercial",
+      "tag": "Premium Stock",
+      "iframeSupported": false,
+      "note": "Elite high-res royalty free photos"
+    },
+    {
+      "name": "Pexels Textures & Backdrops",
+      "logo": "https://www.pexels.com/favicon.ico",
+      "url": "https://www.pexels.com/search/background/",
+      "license": "Free for Commercial",
+      "tag": "Creative Stock",
+      "iframeSupported": false,
+      "note": "Elite free textures & photos"
+    },
+    {
+      "name": "Pixabay Free Images",
+      "logo": "https://pixabay.com/favicon.ico",
+      "url": "https://pixabay.com/images/search/background/",
+      "license": "Public Domain CC0",
+      "tag": "Stunning Photos",
+      "iframeSupported": false,
+      "note": "Stunning public domain assets"
+    }
+  ],
+  "icons": [
+    {
+      "name": "SVGRepo",
+      "logo": "https://www.svgrepo.com/favicon.ico",
+      "url": "https://www.svgrepo.com/",
+      "license": "CC0, MIT, PD",
+      "tag": "500k+ Vectors",
+      "iframeSupported": true,
+      "note": "৫০০k+ SVG, কালার চেঞ্জ করা যায়"
+    }
+  ],
+  "illustrations": [
+    {
+      "name": "unDraw",
+      "logo": "https://undraw.co/favicon.ico",
+      "url": "https://undraw.co/illustrations",
+      "license": "MIT",
+      "tag": "Customizable SVGs",
+      "iframeSupported": true,
+      "note": "কালার চেঞ্জ করে SVG/PNG ডাউনলোড"
+    }
+  ],
+  "shapes": [
+    {
+      "name": "Blobmaker",
+      "logo": "https://www.blobmaker.app/favicon.ico",
+      "url": "https://www.blobmaker.app/",
+      "license": "Free",
+      "tag": "Blob Generator",
+      "iframeSupported": true,
+      "note": "র্যান্ডম Blob SVG বানায়"
+    },
+    {
+      "name": "GetWaves",
+      "logo": "https://getwaves.io/favicon.ico",
+      "url": "https://getwaves.io/",
+      "license": "Free",
+      "tag": "Wave Generator",
+      "iframeSupported": true,
+      "note": "র্যান্ডম Wave SVG বানায়"
+    },
+    {
+      "name": "Shapefest 3D Library",
+      "logo": "https://www.shapefest.com/favicon.ico",
+      "url": "https://www.shapefest.com/",
+      "license": "Free Creative",
+      "tag": "3D Clay Shapes",
+      "iframeSupported": false,
+      "note": "ক্যানভাসে ব্যবহারের জন্য ৩ডি ভেক্টর ও ক্লে শেপস লাইব্রেরি"
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Google Fonts",
+      "logo": "https://fonts.google.com/favicon.ico",
+      "url": "https://fonts.google.com/",
+      "license": "Open Font License (OFL)",
+      "tag": "1500+ Web Fonts",
+      "iframeSupported": true,
+      "note": "বিশ্বের সর্ববৃহৎ ওপেনসোর্স ফন্ট লাইব্রেরি"
+    },
+    {
+      "name": "FontSpace",
+      "logo": "https://www.fontspace.com/favicon.ico",
+      "url": "https://www.fontspace.com/popular/fonts?p=1",
+      "license": "100% Free",
+      "tag": "Search & Download",
+      "iframeSupported": true,
+      "note": "সার্চ + ডাউনলোড iframe এই হয়"
+    },
+    {
+      "name": "DaFont Free Section",
+      "logo": "https://www.dafont.com/favicon.ico",
+      "url": "https://www.dafont.com/theme.php?cat=1&page=1&fpp=100",
+      "license": "Free for personal (some commercial)",
+      "tag": "Popular Fonts",
+      "iframeSupported": true,
+      "note": "ফিল্টার করে Free দেখাতে হবে"
+    }
+  ],
+  "patterns": [
+    {
+      "name": "PatternPad",
+      "logo": "https://patternpad.com/favicon.ico",
+      "url": "https://patternpad.com/",
+      "license": "Free",
+      "tag": "Pattern Maker",
+      "iframeSupported": true,
+      "note": "নিজে প্যাটার্ন বানিয়ে Export"
+    }
+  ],
+  "frames": [
+    {
+      "name": "SVGRepo Frames",
+      "logo": "https://www.svgrepo.com/favicon.ico",
+      "url": "https://www.svgrepo.com/vectors/border/",
+      "license": "Vector Framing",
+      "tag": "Borders",
+      "iframeSupported": true,
+      "note": "Vector Framing & Outlines"
+    },
+    {
+      "name": "Public Domain Frames",
+      "logo": "https://publicdomainvectors.org/favicon.ico",
+      "url": "https://publicdomainvectors.org/en/tag/frame",
+      "license": "CC0 Public Domain",
+      "tag": "Vintage Borders",
+      "iframeSupported": true,
+      "note": "CC0 Borders & Classic Layouts"
+    }
+  ]
+}
