@@ -285,7 +285,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     }`}>
       {/* ROW 1: PREMIUM ICON + TEXT HORIZONTAL BOTTOM MENU BAR (Height: ~64px / py-1.5) */}
       {!isSelected ? (
-        <div className={`flex items-center overflow-x-auto scrollbar-none gap-2 px-3 py-2 border-b transition-colors duration-300 ${
+        <div className={`flex items-center overflow-x-auto scrollbar-none gap-1.5 px-2 py-1 border-b transition-colors duration-300 ${
           theme === "light"
             ? "bg-slate-200/40 border-indigo-100/50"
             : "bg-zinc-950/95 border-b border-zinc-900/80"
@@ -300,7 +300,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 setActiveMobileDrawer("assets");
               }
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border ${
               isDrawingMode
                 ? theme === "light"
                   ? "text-rose-600 bg-amber-100 border-rose-300 shadow-sm"
@@ -310,7 +310,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   : "text-zinc-400 border-transparent hover:text-zinc-200 hover:bg-zinc-900/50"
             }`}
           >
-            <Brush className="w-4.5 h-4.5 text-blue-400 mb-1.5" />
+            <Brush className="w-4 h-4 text-blue-400 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "অঙ্কন" : "Draw"}
             </span>
@@ -322,7 +322,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               if (setIsBackgroundSettingsActive) setIsBackgroundSettingsActive(!isBackgroundSettingsActive);
               if (setActiveSidebarTab) setActiveSidebarTab("backgrounds");
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border ${
               isBackgroundSettingsActive
                 ? theme === "light"
                   ? "text-rose-600 bg-amber-100 border-rose-300 shadow-sm"
@@ -332,7 +332,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   : "text-zinc-400 border-transparent hover:text-zinc-200 hover:bg-zinc-900/50"
             }`}
           >
-            <Palette className="w-4.5 h-4.5 text-purple-400 mb-1.5" />
+            <Palette className="w-4 h-4 text-purple-400 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "ব্যাকগ্রাউন্ড" : "Background"}
             </span>
@@ -344,13 +344,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               if (onAddText) onAddText();
               if (setActiveSidebarTab) setActiveSidebarTab("text");
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
               theme === "light"
                 ? "text-zinc-600 hover:text-rose-500 hover:bg-slate-200/40"
                 : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
             }`}
           >
-            <Type className="w-4.5 h-4.5 text-pink-400 mb-1.5" />
+            <Type className="w-4 h-4 text-pink-400 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "টেক্সট" : "Text"}
             </span>
@@ -362,13 +362,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               if (setActiveSidebarTab) setActiveSidebarTab("stickers");
               if (setActiveMobileDrawer) setActiveMobileDrawer("assets");
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
               theme === "light"
                 ? "text-zinc-600 hover:text-rose-500 hover:bg-slate-200/40"
                 : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
             }`}
           >
-            <Smile className="w-4.5 h-4.5 text-amber-400 mb-1.5" />
+            <Smile className="w-4 h-4 text-amber-400 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "স্টিকার" : "Stickers"}
             </span>
@@ -380,13 +380,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               if (setActiveSidebarTab) setActiveSidebarTab("uploads");
               if (setActiveMobileDrawer) setActiveMobileDrawer("assets");
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
               theme === "light"
                 ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
                 : "text-zinc-500 hover:text-zinc-400 hover:bg-zinc-900/30"
             }`}
           >
-            <Scissors className="w-4.5 h-4.5 text-zinc-500 mb-1.5" />
+            <Scissors className="w-4 h-4 text-zinc-500 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "ক্রপ ও ফ্লিপ" : "Crop & Flip"}
             </span>
@@ -398,13 +398,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               if (setActiveSidebarTab) setActiveSidebarTab("uploads");
               if (setActiveMobileDrawer) setActiveMobileDrawer("assets");
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
               theme === "light"
                 ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
                 : "text-zinc-500 hover:text-zinc-400 hover:bg-zinc-900/30"
             }`}
           >
-            <Sparkles className="w-4.5 h-4.5 text-zinc-500 mb-1.5" />
+            <Sparkles className="w-4 h-4 text-zinc-500 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "ফিল্টার" : "Filters"}
             </span>
@@ -416,13 +416,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               if (setActiveSidebarTab) setActiveSidebarTab("uploads");
               if (setActiveMobileDrawer) setActiveMobileDrawer("assets");
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
               theme === "light"
                 ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
                 : "text-zinc-500 hover:text-zinc-400 hover:bg-zinc-900/30"
             }`}
           >
-            <Sliders className="w-4.5 h-4.5 text-zinc-500 mb-1.5" />
+            <Sliders className="w-4 h-4 text-zinc-500 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "অ্যাডজাস্ট" : "Adjust"}
             </span>
@@ -434,13 +434,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               if (setActiveSidebarTab) setActiveSidebarTab("shapes");
               if (setActiveMobileDrawer) setActiveMobileDrawer("assets");
             }}
-            className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border border-transparent ${
               theme === "light"
                 ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
                 : "text-zinc-500 hover:text-zinc-400 hover:bg-zinc-900/30"
             }`}
           >
-            <LayoutGrid className="w-4.5 h-4.5 text-zinc-500 mb-1.5" />
+            <LayoutGrid className="w-4 h-4 text-zinc-500 mb-1" />
             <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
               {lang === "bn" ? "ফ্রেম" : "Frames"}
             </span>
@@ -448,29 +448,29 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           
         </div>
       ) : (
-        <div className={`flex items-center overflow-x-auto scrollbar-none gap-2 px-3 py-2 border-b transition-colors duration-300 ${
+        <div className={`flex items-center overflow-x-auto scrollbar-none gap-1.5 px-2 py-1 border-b transition-colors duration-300 ${
           theme === "light"
             ? "bg-slate-200/40 border-indigo-100/50"
             : "bg-zinc-950/95 border-b border-zinc-900/80"
         }`}>
           {/* Active type indicator badge */}
-          <div className={`flex flex-col items-center justify-center py-1 px-3 border rounded-xl text-[9px] font-mono font-bold uppercase shrink-0 min-w-[64px] h-[52px] ${
+          <div className={`flex flex-col items-center justify-center py-0.5 px-2 border rounded-xl text-[8.5px] font-mono font-bold uppercase shrink-0 min-w-[56px] h-[40px] ${
             theme === "light"
               ? "bg-white border-indigo-100 text-zinc-500"
               : "bg-zinc-900 border-zinc-800/80 text-zinc-400"
           }`}>
-            <Settings className={`w-3.5 h-3.5 mb-1 ${theme === "light" ? "text-rose-500" : "text-amber-500"}`} />
+            <Settings className={`w-3 h-3 mb-0.5 ${theme === "light" ? "text-rose-500" : "text-amber-500"}`} />
             <span>{formatting.type}</span>
           </div>
 
           {/* Dynamic Tabs list */}
           {tabs.map((tab) => {
-            const icon = tabIcons[tab] || <Settings className="w-4.5 h-4.5 text-zinc-400 mb-1.5" />;
+            const icon = tabIcons[tab] || <Settings className="w-4 h-4 text-zinc-400 mb-1" />;
             return (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex flex-col items-center justify-center py-2 px-4 min-w-[80px] rounded-xl cursor-pointer transition-all shrink-0 border ${
+                className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[68px] rounded-xl cursor-pointer transition-all shrink-0 border ${
                   activeTab === tab
                     ? theme === "light"
                       ? "text-rose-600 bg-rose-50 border-rose-300 shadow-sm font-semibold"
@@ -492,7 +492,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
       {/* ROW 2: ACTIVE CONTROL TOOLS PANEL (Height: 40px / h-10) */}
       {((isSelected && activeTab) || (!isSelected && isBackgroundSettingsActive)) && (
-        <div className={`h-11 border-b flex items-center overflow-x-auto scrollbar-none px-3 gap-3 transition-colors duration-300 ${
+        <div className={`h-9 border-b flex items-center overflow-x-auto scrollbar-none px-2 gap-2 transition-colors duration-300 ${
           theme === "light"
             ? "bg-white border-indigo-100/50"
             : "bg-zinc-900/40 border-zinc-900/80"
