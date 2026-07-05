@@ -4,7 +4,8 @@ import { createServer as createViteServer } from "vite";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  // Support PORT from environment variable (required for Cloud Run, Heroku, etc.)
+  const PORT = parseInt(process.env.PORT || "3000", 10);
 
   app.use(express.json());
 
@@ -77,7 +78,7 @@ async function startServer() {
 - Toy
 - Mixed Objects
 
-Return your response as JSON matching the requested schema. Provide a confidence rating between 0 and 100 based on image clarity, and suggest specific segmentation values optimized for the object category's unique features (e.g. high hairRecovery for portraits, low feather and high edgeContrast for laptops/electronics/products).`
+Return your response as JSON matching the requested schema. Provide a confidence rating between 0 and 100 based on image clarity, and suggest specific segmentation values optimized for the object [...]
       };
 
       const response = await ai.models.generateContent({
@@ -249,11 +250,11 @@ Return your response as JSON matching the requested schema. Provide a confidence
       // Construct a high-precision, photo-editing prompt depending on editing type
       let systemPrompt = "";
       if (type === "erase") {
-        systemPrompt = "You are a professional Content-Aware Eraser. Remove the central object or the main subject from this image. Reconstruct the background using surrounding textures, lighting, patterns, and style to make the removal look completely seamless, natural, and invisible. Return ONLY the newly edited image.";
+        systemPrompt = "You are a professional Content-Aware Eraser. Remove the central object or the main subject from this image. Reconstruct the background using surrounding textures, lighting[...]
       } else if (type === "expand") {
-        systemPrompt = "You are an advanced Generative Expand outpainter. Analyze the borders, style, texture, scenery, and lighting of this image. Reconstruct and outpaint the edges outward to expand the canvas naturally, maintaining absolute visual consistency. Return ONLY the newly edited image.";
+        systemPrompt = "You are an advanced Generative Expand outpainter. Analyze the borders, style, texture, scenery, and lighting of this image. Reconstruct and outpaint the edges outward to e[...]
       } else {
-        systemPrompt = `You are a professional Generative Fill engine. Modify this image according to the instruction: "${prompt || "Make it look spectacular"}". Maintain the background, original style, perspective, and lighting while introducing, replacing, or modifying elements as requested. Return ONLY the newly edited image.`;
+        systemPrompt = `You are a professional Generative Fill engine. Modify this image according to the instruction: "${prompt || "Make it look spectacular"}". Maintain the background, original[...]
       }
 
       const response = await ai.models.generateContent({
@@ -531,10 +532,11 @@ Return your response as JSON matching the requested schema. Provide a confidence
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Sada Kagoj Server] Active on http://localhost:${PORT}`);
+    console.log(`[Sada Kagoj Server] Active on http://0.0.0.0:${PORT}`);
   });
 }
 
 startServer().catch((err) => {
   console.error("Failed to start Sada Kagoj server:", err);
+  process.exit(1);
 });
