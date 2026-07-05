@@ -251,6 +251,134 @@ export const Sidebar: React.FC<SidebarProps> = ({
     arrows: false,
   });
 
+  // AI Magic Lab local states
+  const [aiMagicPrompt, setAiMagicPrompt] = useState("");
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiSuccessMsg, setAiSuccessMsg] = useState("");
+
+  const handleAiMagicEdit = async (type: "fill" | "erase" | "expand") => {
+    const canvas = fabricCanvasRef?.current;
+    if (!canvas) return;
+
+    const activeObj = canvas.getActiveObject();
+    if (!activeObj) {
+      setAiError(lang === "bn" ? "প্রথমে ক্যানভাস থেকে একটি ইমেজ লেয়ার সিলেক্ট করুন।" : "Please select an image layer on the canvas first.");
+      return;
+    }
+
+    // Verify if it is an image type or has an image element
+    const isImage = activeObj.type === "image" || (activeObj as any)._element;
+    if (!isImage) {
+      setAiError(lang === "bn" ? "সিলেক্ট করা লেয়ারটি একটি ছবি হতে হবে।" : "The selected layer must be an image.");
+      return;
+    }
+
+    setIsAiProcessing(true);
+    setAiError("");
+    setAiSuccessMsg("");
+
+    try {
+      // 1. Convert selected Fabric.js object to Base64
+      let imageBase64 = "";
+      const element = (activeObj as any)._element;
+      if (element && element.src && element.src.startsWith("data:")) {
+        imageBase64 = element.src;
+      } else {
+        imageBase64 = activeObj.toDataURL({ format: "png" });
+      }
+
+      // 2. Call our newly implemented express /api/magic-edit endpoint
+      const response = await fetch("/api/magic-edit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageBase64,
+          prompt: aiMagicPrompt,
+          type,
+          mimeType: "image/png"
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to process AI request");
+      }
+
+      const data = await response.json();
+      if (!data.imageUrl) {
+        throw new Error("No image was returned by the AI engine");
+      }
+
+      // 3. Replace the active image source seamlessly while preserving dimensions and layer position!
+      const url = data.imageUrl;
+      
+      const left = activeObj.left;
+      const top = activeObj.top;
+      const scaleX = activeObj.scaleX;
+      const scaleY = activeObj.scaleY;
+      const angle = activeObj.angle;
+      const flipX = activeObj.flipX;
+      const flipY = activeObj.flipY;
+      const skewX = activeObj.skewX;
+      const skewY = activeObj.skewY;
+      const opacity = activeObj.opacity;
+      const shadow = activeObj.shadow;
+      const clipPath = activeObj.clipPath;
+
+      const objects = canvas.getObjects();
+      const index = objects.indexOf(activeObj);
+
+      // Load new image and replace
+      fabric.FabricImage.fromURL(url, { crossOrigin: "anonymous" }).then((newImg) => {
+        // Copy custom properties if any
+        (newImg as any).contourBorderWidth = (activeObj as any).contourBorderWidth;
+        (newImg as any).contourBorderColor = (activeObj as any).contourBorderColor;
+
+        newImg.set({
+          left,
+          top,
+          scaleX,
+          scaleY,
+          angle,
+          flipX,
+          flipY,
+          skewX,
+          skewY,
+          opacity,
+          shadow,
+          clipPath,
+          cornerStyle: "circle"
+        });
+
+        canvas.add(newImg);
+        if (index !== -1) {
+          canvas.moveObjectTo(newImg, index);
+        }
+        canvas.remove(activeObj);
+        canvas.setActiveObject(newImg);
+        canvas.renderAll();
+
+        if (saveHistory) saveHistory();
+        if (syncCanvasStateToReact) syncCanvasStateToReact();
+
+        setAiSuccessMsg(
+          data.simulated
+            ? (lang === "bn" ? "সিমুলেশন সম্পন্ন! এআই কুয়েরির জন্য Secrets-এ কী বসান।" : "Simulation active! Configure GEMINI_API_KEY for real AI.")
+            : (lang === "bn" ? "এআই ম্যাজিক এডিট সফলভাবে সম্পন্ন হয়েছে!" : "AI Magic Edit applied successfully!")
+        );
+      });
+
+    } catch (err: any) {
+      console.error("AI Magic Edit Error:", err);
+      setAiError(err.message || "Failed to perform AI Magic Edit");
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
   const toggleShapeCategory = (catId: string) => {
     setExpandedShapeCategories((prev) => ({
       ...prev,
@@ -334,6 +462,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-[9px] font-medium scale-95">Size</span>
           </button>
 
+          {/* Upload Manager Tab */}
+          <button
+            onClick={() => setActiveTab("uploads")}
+            className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-1 transition-all relative cursor-pointer ${
+              activeTab === "uploads"
+                ? theme === "light"
+                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/10 font-semibold"
+                  : "bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20 font-bold"
+                : theme === "light"
+                  ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
+            }`}
+            title={lang === "bn" ? "আপলোড গ্যালারি" : "Uploads Gallery"}
+          >
+            <Upload className="w-5 h-5" />
+            <span className="text-[9px] font-medium scale-95">Uploads</span>
+            {uploadedImages.length > 0 && (
+              <span className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border animate-pulse ${
+                theme === "light" ? "bg-rose-500 border-white" : "bg-amber-400 border-zinc-950"
+              }`} />
+            )}
+          </button>
+
+          {/* Backgrounds Tab */}
+          <button
+            onClick={() => setActiveTab("backgrounds")}
+            className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-1 transition-all relative cursor-pointer ${
+              activeTab === "backgrounds"
+                ? theme === "light"
+                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/10 font-semibold"
+                  : "bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20 font-bold"
+                : theme === "light"
+                  ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
+            }`}
+            title={lang === "bn" ? "ব্যাকগ্রাউন্ড" : "Backgrounds"}
+          >
+            <Palette className="w-5 h-5" />
+            <span className="text-[9px] font-medium scale-95">Bg</span>
+          </button>
+
           {/* Typography Tab */}
           <button
             onClick={() => setActiveTab("text")}
@@ -404,47 +573,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Brush className="w-5 h-5" />
             <span className="text-[9px] font-medium scale-95">Draw</span>
-          </button>
-          
-          {/* Backgrounds Tab */}
-          <button
-            onClick={() => setActiveTab("backgrounds")}
-            className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-1 transition-all relative cursor-pointer ${
-              activeTab === "backgrounds"
-                ? theme === "light"
-                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/10 font-semibold"
-                  : "bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20 font-bold"
-                : theme === "light"
-                  ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
-            }`}
-            title={lang === "bn" ? "ব্যাকগ্রাউন্ড" : "Backgrounds"}
-          >
-            <Palette className="w-5 h-5" />
-            <span className="text-[9px] font-medium scale-95">Bg</span>
-          </button>
-
-          {/* Upload Manager Tab */}
-          <button
-            onClick={() => setActiveTab("uploads")}
-            className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-1 transition-all relative cursor-pointer ${
-              activeTab === "uploads"
-                ? theme === "light"
-                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/10 font-semibold"
-                  : "bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20 font-bold"
-                : theme === "light"
-                  ? "text-zinc-500 hover:text-rose-500 hover:bg-slate-200/40"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
-            }`}
-            title={lang === "bn" ? "আপলোড গ্যালারি" : "Uploads Gallery"}
-          >
-            <Upload className="w-5 h-5" />
-            <span className="text-[9px] font-medium scale-95">Uploads</span>
-            {uploadedImages.length > 0 && (
-              <span className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border animate-pulse ${
-                theme === "light" ? "bg-rose-500 border-white" : "bg-amber-400 border-zinc-950"
-              }`} />
-            )}
           </button>
 
           {/* Save/Templates Tab */}
@@ -2004,6 +2132,115 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ? "উৎপাদনশীলতা বাড়ানোর উন্নত ডিজাইন কন্ট্রোল ও জেনারেটর" 
                   : "Boost design speed with smart alignment aids and vector code builders"}
               </p>
+            </div>
+
+            {/* ─── AI Magic Lab ─── */}
+            <div className={`p-3.5 rounded-xl border space-y-3.5 relative overflow-hidden ${boxBgClass}`}>
+              <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/5 rounded-full blur-xl pointer-events-none animate-pulse" />
+              
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-bold flex items-center gap-1.5 ${isLight ? "text-zinc-800" : "text-white"}`}>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500/10 animate-bounce" />
+                  <span>{lang === "bn" ? "এআই ম্যাজিক ল্যাব" : "AI Magic Lab"}</span>
+                </span>
+                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/10">
+                  Gemini 3.1
+                </span>
+              </div>
+
+              <p className={`text-[10px] leading-relaxed ${textMutedClass}`}>
+                {lang === "bn" 
+                  ? "ক্যানভাস থেকে যেকোনো ছবি সিলেক্ট করে এআই জেনারেটিভ ফিল, স্মার্ট ইরেজার এবং সিনারি এক্সপ্যান্ড ব্যবহার করুন।" 
+                  : "Select any image on the canvas to apply AI-powered Generative Fill, Smart Subject Erasing, or Scene Expand."}
+              </p>
+
+              <div className="space-y-2">
+                <label className={`text-[10px] font-extrabold uppercase tracking-wide block ${isLight ? "text-zinc-500" : "text-zinc-400"}`}>
+                  {lang === "bn" ? "এআই এডিটিং প্রম্পট (জেনারেটিভ ফিল এর জন্য):" : "AI Edit Prompt (For Generative Fill):"}
+                </label>
+                <input
+                  type="text"
+                  value={aiMagicPrompt}
+                  onChange={(e) => setAiMagicPrompt(e.target.value)}
+                  placeholder={lang === "bn" ? "উদা: লাল শার্ট পরিবর্তন করে নীল টি-শার্ট করুন..." : "e.g., Change red shirt to blue sports jersey..."}
+                  className={`w-full border text-xs rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all ${inputBgClass}`}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2">
+                {/* Generative Fill Button */}
+                <button
+                  disabled={isAiProcessing}
+                  onClick={() => handleAiMagicEdit("fill")}
+                  className={`w-full py-2 px-3 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    isAiProcessing 
+                      ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" 
+                      : isLight 
+                        ? "bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-500/10" 
+                        : "bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black"
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{lang === "bn" ? "✨ জেনারেটিভ ফিল করুন" : "✨ Run Generative Fill"}</span>
+                </button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Smart Erase Subject Button */}
+                  <button
+                    disabled={isAiProcessing}
+                    onClick={() => handleAiMagicEdit("erase")}
+                    className={`py-2 px-2.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border ${
+                      isAiProcessing 
+                        ? "bg-zinc-800 text-zinc-500 border-transparent cursor-not-allowed" 
+                        : isLight 
+                          ? "bg-slate-50 hover:bg-slate-100 border-slate-200 text-zinc-700" 
+                          : "bg-zinc-950 hover:bg-zinc-900 border-zinc-850 text-amber-400 font-bold"
+                    }`}
+                  >
+                    <Trash2 className="w-3 h-3 text-red-400" />
+                    <span>{lang === "bn" ? "স্মার্ট ইরেজার" : "Smart Erase"}</span>
+                  </button>
+
+                  {/* Scene Outpaint/Expand Button */}
+                  <button
+                    disabled={isAiProcessing}
+                    onClick={() => handleAiMagicEdit("expand")}
+                    className={`py-2 px-2.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border ${
+                      isAiProcessing 
+                        ? "bg-zinc-800 text-zinc-500 border-transparent cursor-not-allowed" 
+                        : isLight 
+                          ? "bg-slate-50 hover:bg-slate-100 border-slate-200 text-zinc-700" 
+                          : "bg-zinc-950 hover:bg-zinc-900 border-zinc-850 text-indigo-400 font-bold"
+                    }`}
+                  >
+                    <Sliders className="w-3 h-3 text-indigo-400" />
+                    <span>{lang === "bn" ? "সিন এক্সপ্যান্ড" : "Scene Expand"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Message HUD */}
+              {isAiProcessing && (
+                <div className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/10 p-2.5 rounded-lg animate-pulse">
+                  <RefreshCw className="w-3.5 h-3.5 text-amber-500 animate-spin shrink-0" />
+                  <span className="text-[10px] text-amber-400 font-bold">
+                    {lang === "bn" ? "এআই প্রসেসিং হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন..." : "Gemini processing your image, please wait..."}
+                  </span>
+                </div>
+              )}
+
+              {aiError && (
+                <div className="p-2 bg-red-950/40 border border-red-900/30 text-red-400 rounded-lg text-[10px] font-semibold leading-normal">
+                  ⚠️ {aiError}
+                </div>
+              )}
+
+              {aiSuccessMsg && (
+                <div className="p-2 bg-emerald-950/40 border border-emerald-900/30 text-emerald-400 rounded-lg text-[10px] font-semibold leading-normal">
+                  ✅ {aiSuccessMsg}
+                </div>
+              )}
             </div>
 
             {/* Layout Snapping & Guides HUD */}
