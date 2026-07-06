@@ -11,12 +11,23 @@
   --color-paper-margin: #f1a9a0;
 }
 
-body {
+html, body, #root {
   margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+body {
   font-family: var(--font-sans);
-  background-color: #f3f4f6;
+  background-color: #0d1117;
   color: #1f2937;
-  overflow-x: hidden;
 }
 
 /* Custom Paper Textures */
