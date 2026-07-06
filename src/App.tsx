@@ -151,6 +151,19 @@ export default function App() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Absolutely guarantee no scroll offset when changing workspace (this prevents layout shifts)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as any });
+    if (document.body) {
+      document.body.scrollTop = 0;
+      document.body.scrollLeft = 0;
+    }
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0;
+      document.documentElement.scrollLeft = 0;
+    }
+  }, [workspace]);
+
   // Generate random unique filename on export modal open
   useEffect(() => {
     if (isExportModalOpen) {
@@ -5754,20 +5767,20 @@ export default function App() {
 
   if (workspace === "home") {
     return (
-      <div className="h-screen w-screen bg-[#040407] text-zinc-100 font-sans flex flex-col justify-between overflow-y-auto overflow-x-hidden selection:bg-amber-400 selection:text-zinc-950 relative" id="landing-page-root">
+      <div className="h-[100dvh] w-[100dvw] bg-[#040407] text-zinc-100 font-sans flex flex-col justify-start overflow-y-auto overflow-x-hidden selection:bg-amber-400 selection:text-zinc-950 relative" id="landing-page-root">
         {/* Ambient background glows */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-rose-500/5 blur-[120px] pointer-events-none" />
         
         {/* Header */}
-        <header className="max-w-7xl w-full mx-auto px-6 h-20 flex items-center justify-between select-none shrink-0 relative z-10">
+        <header className="max-w-7xl w-full mx-auto px-6 h-14 md:h-16 flex items-center justify-between select-none shrink-0 relative z-10">
           <div className="flex items-center gap-2">
-            <span className="p-2 bg-gradient-to-tr from-amber-500 to-rose-500 rounded-xl text-lg font-black shadow-lg shadow-amber-500/10">✨</span>
+            <span className="p-1.5 bg-gradient-to-tr from-amber-500 to-rose-500 rounded-xl text-base font-black shadow-lg shadow-amber-500/10">✨</span>
             <div>
-              <h1 className="text-sm font-black tracking-widest leading-none bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+              <h1 className="text-xs font-black tracking-widest leading-none bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
                 TECH STUDIO
               </h1>
-              <p className="text-[9px] text-zinc-500 font-black tracking-widest uppercase mt-1">
+              <p className="text-[8px] text-zinc-500 font-black tracking-widest uppercase mt-0.5">
                 Creative Studio Suite
               </p>
             </div>
@@ -5776,7 +5789,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLang(lang === "en" ? "bn" : "en")}
-              className="px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900 text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer"
+              className="px-2.5 py-1 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900 text-[9px] font-black uppercase tracking-wider text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer"
             >
               🌐 {lang === "en" ? "বাংলা" : "English"}
             </button>
@@ -5784,20 +5797,21 @@ export default function App() {
         </header>
 
         {/* Dashboard Grid Container */}
-        <main className="max-w-5xl w-full mx-auto px-6 py-8 flex-1 flex flex-col justify-center relative z-10">
-          <div className="text-center mb-12 select-none">
+        <main className="max-w-7xl w-full mx-auto px-6 py-2 md:py-4 flex-1 flex flex-col justify-start relative z-10">
+          <div className="text-left mb-4 select-none">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-start"
             >
-              <span className="text-[10px] uppercase tracking-widest font-black bg-gradient-to-r from-amber-400 to-rose-500 bg-clip-text text-transparent px-3.5 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/5">
+              <span className="text-[8px] uppercase tracking-widest font-black bg-gradient-to-r from-amber-400 to-rose-500 bg-clip-text text-transparent px-2.5 py-0.5 rounded-full border border-amber-500/20 bg-amber-500/5">
                 {lang === "en" ? "✨ AI-Powered Creative Suite" : "✨ এআই-চালিত ক্রিয়েটিভ স্যুট"}
               </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white mt-5 mb-3 leading-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white mt-2.5 mb-1 leading-none">
                 {lang === "en" ? "Next-Gen Tech Studio" : "নেক্সট-জেন টেক স্টুডিও"}
               </h2>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto font-bold uppercase tracking-wide">
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 font-bold uppercase tracking-wider">
                 {lang === "en" 
                   ? "Explore high-fidelity offline production pipelines directly in your browser." 
                   : "ব্রাউজারেই উপভোগ করুন উচ্চ মানের ক্রিয়েটিভ অফলাইন এডিটিং সুবিধা।"}
@@ -5805,76 +5819,103 @@ export default function App() {
             </motion.div>
           </div>
 
-          {/* Cards Grid */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full">
-            
-            {/* Card 1: Photo Studio */}
-            <motion.div
-              whileHover={{ y: -4, scale: 1.005 }}
-              transition={{ duration: 0.2 }}
-              className="group bg-zinc-900/40 border border-zinc-900 hover:border-amber-500/30 rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl shadow-2xl"
-              id="photo-studio-card"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl transition-all duration-300" />
+          {/* Two-Column Layout */}
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch w-full">
+            {/* Left Side: Services (Smaller Cards Side-by-Side) */}
+            <div className="flex-1 lg:max-w-[58%] grid sm:grid-cols-2 gap-3.5">
               
-              <div>
-                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl border border-amber-500/10 flex items-center justify-center text-xl mb-6 group-hover:scale-105 transition-transform">
-                  🖼️
-                </div>
-                
-                <h3 className="text-lg font-black tracking-tight text-white mb-2 flex items-center gap-2">
-                  <span>{lang === "en" ? "Tech Photo Studio" : "টেক ফটো স্টুডিও"}</span>
-                  <span className="text-[8px] font-black uppercase bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full tracking-wider border border-amber-500/10">Active</span>
-                </h3>
-                
-                <p className="text-xs text-zinc-400 font-semibold leading-relaxed mb-8">
-                  {lang === "en"
-                    ? "Professional AI Photo Editing, automatic background cutouts, advanced filters, overlay masks, high-precision canvas design, layers, and instant presets."
-                    : "পেশাদার এআই ফটো এডিটিং, অটোমেটিক ব্যাকগ্রাউন্ড রিমুভাল, অ্যাডভান্সড ফিল্টারস, ওভারলে মাস্কস এবং প্রিসিশন লেয়ার ম্যানেজমেন্ট।"}
-                </p>
-              </div>
-
-              <button
-                onClick={() => setWorkspace("photo")}
-                className="w-full py-3.5 bg-zinc-900/80 hover:bg-amber-400 group-hover:bg-amber-500 group-hover:shadow-lg group-hover:shadow-amber-500/10 text-zinc-300 group-hover:text-zinc-950 font-black text-xs rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer border border-zinc-850 hover:border-amber-400"
+              {/* Card 1: Photo Studio */}
+              <motion.div
+                whileHover={{ y: -2, scale: 1.002 }}
+                transition={{ duration: 0.15 }}
+                className="group bg-zinc-900/30 border border-zinc-900 hover:border-amber-500/20 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl shadow-xl"
+                id="photo-studio-card"
               >
-                <span>{lang === "en" ? "Enter Tech Photo Studio" : "টেক ফটো স্টুডিওতে প্রবেশ করুন"}</span>
-              </button>
-            </motion.div>
-
-            {/* Card 2: Video Studio */}
-            <motion.div
-              whileHover={{ y: -4, scale: 1.005 }}
-              transition={{ duration: 0.2 }}
-              className="group bg-zinc-900/40 border border-zinc-900 hover:border-rose-500/30 rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl shadow-2xl"
-              id="video-studio-card"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl transition-all duration-300" />
-              
-              <div>
-                <div className="w-12 h-12 bg-rose-500/10 rounded-2xl border border-rose-500/10 flex items-center justify-center text-xl mb-6 group-hover:scale-105 transition-transform">
-                  🎬
+                <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/5 rounded-full blur-2xl transition-all duration-300" />
+                
+                <div>
+                  <div className="w-8 h-8 bg-amber-500/10 rounded-lg border border-amber-500/10 flex items-center justify-center text-base mb-2.5 group-hover:scale-105 transition-transform">
+                    🖼️
+                  </div>
+                  
+                  <h3 className="text-sm font-black tracking-tight text-white mb-1 flex items-center gap-1">
+                    <span>{lang === "en" ? "Tech Photo Studio" : "টেক ফটো স্টুডিও"}</span>
+                    <span className="text-[6.5px] font-black uppercase bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded-full tracking-wider border border-amber-500/10">Active</span>
+                  </h3>
+                  
+                  <p className="text-[10px] text-zinc-400 font-medium leading-relaxed mb-4">
+                    {lang === "en"
+                      ? "Professional AI Photo Editing, automatic background cutouts, advanced filters, overlay masks, layers, and instant presets."
+                      : "পেশাদার এআই ফটো এডিটিং, অটোমেটিক ব্যাকগ্রাউন্ড রিমুভাল, ফিল্টারস, ওভারলে মাস্কস এবং প্রিসিশন লেয়ার ম্যানেজমেন্ট।"}
+                  </p>
                 </div>
-                
-                <h3 className="text-lg font-black tracking-tight text-white mb-2 flex items-center gap-2">
-                  <span>{lang === "en" ? "Tech Video Studio" : "টেক ভিডিও স্টুডিও"}</span>
-                  <span className="text-[8px] font-black uppercase bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded-full tracking-wider border border-rose-500/10">DSP Studio</span>
-                </h3>
-                
-                <p className="text-xs text-zinc-400 font-semibold leading-relaxed mb-8">
-                  {lang === "en"
-                    ? "Professional Video & Audio Editing. Seamlessly trim, split, merge, control speeds, manage multi-track timelines, adjust visual effects, filters, and DSP audio mixer."
-                    : "মাল্টি-লেয়ার টাইমলাইন ও ডিজিটাল সিগন্যাল প্রসেসিং মিক্সার সহ পেশাদার ভিডিও ও অডিও এডিটিং ওয়ার্কস্পেস।"}
-                </p>
-              </div>
 
-              <button
-                onClick={() => setWorkspace("video")}
-                className="w-full py-3.5 bg-zinc-900/80 hover:bg-rose-400 group-hover:bg-rose-500 group-hover:shadow-lg group-hover:shadow-rose-500/10 text-zinc-300 group-hover:text-zinc-950 font-black text-xs rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer border border-zinc-850 hover:border-rose-400"
+                <button
+                  onClick={() => setWorkspace("photo")}
+                  className="w-full py-2 bg-zinc-900/80 hover:bg-amber-400 group-hover:bg-amber-500 group-hover:shadow-md group-hover:shadow-amber-500/10 text-zinc-300 group-hover:text-zinc-950 font-black text-[10px] rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer border border-zinc-850 hover:border-amber-400"
+                >
+                  <span>{lang === "en" ? "Enter Photo Studio" : "ফটো স্টুডিওতে প্রবেশ করুন"}</span>
+                </button>
+              </motion.div>
+
+              {/* Card 2: Video Studio */}
+              <motion.div
+                whileHover={{ y: -2, scale: 1.002 }}
+                transition={{ duration: 0.15 }}
+                className="group bg-zinc-900/30 border border-zinc-900 hover:border-rose-500/20 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl shadow-xl"
+                id="video-studio-card"
               >
-                <span>{lang === "en" ? "Enter Tech Video Studio" : "টেক ভিডিও স্টুডিওতে প্রবেশ করুন"}</span>
-              </button>
-            </motion.div>
+                <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/5 rounded-full blur-2xl transition-all duration-300" />
+                
+                <div>
+                  <div className="w-8 h-8 bg-rose-500/10 rounded-lg border border-rose-500/10 flex items-center justify-center text-base mb-2.5 group-hover:scale-105 transition-transform">
+                    🎬
+                  </div>
+                  
+                  <h3 className="text-sm font-black tracking-tight text-white mb-1 flex items-center gap-1">
+                    <span>{lang === "en" ? "Tech Video Studio" : "টেক ভিডিও স্টুডিও"}</span>
+                    <span className="text-[6.5px] font-black uppercase bg-rose-500/10 text-rose-400 px-1 py-0.5 rounded-full tracking-wider border border-rose-500/10">DSP Studio</span>
+                  </h3>
+                  
+                  <p className="text-[10px] text-zinc-400 font-medium leading-relaxed mb-4">
+                    {lang === "en"
+                      ? "Professional Video & Audio Editing. Seamlessly trim, split, merge, control speeds, manage multi-track timelines."
+                      : "মাল্টি-লেয়ার টাইমলাইন ও ডিজিটাল সিগন্যাল প্রসেসিং মিক্সার সহ পেশাদার ভিডিও ও অডিও এডিটিং ওয়ার্কস্পেস।"}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setWorkspace("video")}
+                  className="w-full py-2 bg-zinc-900/80 hover:bg-rose-400 group-hover:bg-rose-500 group-hover:shadow-md group-hover:shadow-rose-500/10 text-zinc-300 group-hover:text-zinc-950 font-black text-[10px] rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer border border-zinc-850 hover:border-rose-400"
+                >
+                  <span>{lang === "en" ? "Enter Video Studio" : "ভিডিও স্টুডিওতে প্রবেশ করুন"}</span>
+                </button>
+              </motion.div>
+
+            </div>
+
+            {/* Right Side: Elegant placeholder for the personal photo */}
+            <div className="flex-1 lg:max-w-[42%] flex flex-col justify-stretch">
+              <div className="flex-1 min-h-[150px] lg:min-h-full rounded-xl border border-dashed border-zinc-800 bg-zinc-950/10 flex flex-col items-center justify-center p-4 text-center backdrop-blur-md relative overflow-hidden group hover:border-zinc-700/30 transition-all duration-300 select-none">
+                {/* Tech blueprint grid pattern overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#08080a_1px,transparent_1px),linear-gradient(to_bottom,#08080a_1px,transparent_1px)] bg-[size:16px_16px] opacity-30 pointer-events-none" />
+                <div className="absolute -top-12 -right-12 w-40 h-40 bg-zinc-900/5 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-10 h-10 bg-zinc-900/80 border border-zinc-850 rounded-full flex items-center justify-center mb-3 text-lg text-zinc-500 group-hover:scale-105 group-hover:border-zinc-750 transition-all duration-300">
+                    👤
+                  </div>
+                  <h4 className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">
+                    {lang === "en" ? "Reserved Space for Avatar" : "ব্যক্তিগত ছবি স্থান"}
+                  </h4>
+                  <p className="text-[9px] text-zinc-600 font-bold max-w-[180px] leading-relaxed uppercase tracking-wide">
+                    {lang === "en" 
+                      ? "Custom dashboard photo container" 
+                      : "আপনার প্রোফাইল ছবির জন্য সংরক্ষিত স্থান"}
+                  </p>
+                </div>
+              </div>
+            </div>
 
           </div>
         </main>
@@ -5900,7 +5941,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-900 text-zinc-100 font-sans" id="sada-kagoj-canvas-workspace">
+    <div className="flex h-[100dvh] w-[100dvw] overflow-hidden bg-zinc-900 text-zinc-100 font-sans" id="sada-kagoj-canvas-workspace">
       
       {/* Dynamic Floating Notification / Toasts */}
       <AnimatePresence>
@@ -7027,8 +7068,8 @@ export default function App() {
         ref={hiddenInputRef}
         value={hiddenInputValue}
         onChange={handleHiddenInputChange}
-        className="absolute opacity-0 pointer-events-none w-0 h-0"
-        style={{ top: "-1000px", left: "-1000px" }}
+        className="fixed opacity-0 pointer-events-none w-px h-px"
+        style={{ top: "10px", left: "10px" }}
         aria-hidden="true"
         tabIndex={-1}
       />
