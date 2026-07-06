@@ -1111,7 +1111,7 @@ export function VideoStudio({ lang, theme, onBackToHome }: VideoStudioProps) {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 font-sans" id="video-studio-root">
+    <div className="flex flex-col h-[100dvh] w-[100dvw] overflow-hidden bg-zinc-950 text-zinc-100 font-sans" id="video-studio-root">
       
       {/* ─── MAIN HEADER ─── */}
       <header className="h-14 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md px-4 flex items-center justify-between shrink-0 select-none">
